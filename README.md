@@ -13,6 +13,7 @@ but still _packs_ a byte.
 - Toggle comment lines 
 - Bookmarking
 - Auto-indentation
+- Drag n Drop
 - Recent file list
 - Open last file on startup
 - Toggle word wrap

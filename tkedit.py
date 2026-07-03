@@ -22,6 +22,9 @@ from ttkbootstrap import *
 from ttkbootstrap.constants import *
 from ttkbootstrap.dialogs import Querybox
 from ttkbootstrap.dialogs import Messagebox
+from ttkbootstrap import Style
+import tkinterdnd2 as tkdnd
+from tkinterdnd2 import DND_FILES, TkinterDnD
 from tklinenums import TkLineNumbers
 import markdown
 from Tksyntex import SyntaxHighlighter
@@ -99,6 +102,7 @@ class TKedit:
         self.has_highlight = False
         self.indent = " " * self.tabsize
         self.bookmarks = set()
+        self.dropfile = None
 
         frame_t = Frame(root)
         frame_t.pack(side="right", fill="both", expand=True)
@@ -224,12 +228,22 @@ class TKedit:
         self.enable_autopairs(self.text_area)  # setup []]{  [] ddd   }}()
         self.text_area.tag_configure("bookmark", background="black") # Light green highlight
 
-        root.style.theme_use(self.theme)  # set the ttkbootstrap theme
+        self.style = Style(theme=self.theme)
 
         if self.theme in ["darkly","cyborg","superhero","solar"]:
-            root.style.configure('TButton', background=root.style.colors.dark, foreground=root.style.colors.light)
+            self.style.configure('TButton', background=self.style.colors.dark, foreground=self.style.colors.light)
         else:
-            root.style.configure('TButton', background=root.style.colors.light, foreground=root.style.colors.dark)
+            self.style.configure('TButton', background=self.style.colors.light, foreground=self.style.colors.dark)
+
+        # --- DRAG AND DROP SETUP ---
+        # Register both the master window and your text editor widget as drop targets
+        self.master.drop_target_register(tkdnd.DND_FILES)
+        self.text_area.drop_target_register(tkdnd.DND_FILES)
+
+        # Bind the drop event to the handler
+        self.master.dnd_bind("<<Drop>>", self.handle_drop)
+        self.text_area.dnd_bind("<<Drop>>", self.handle_drop)
+
 
         # open file from command line
         if len(sys.argv) > 1:
@@ -242,6 +256,22 @@ class TKedit:
                     self.load_file()
 
     #-----------End of Init----------#
+
+
+    def handle_drop(self, event):
+        ''' This function runs when a file is dropped onto the app '''
+        # Parse the dropped files list (handles spaces in file paths correctly)
+        file_paths = self.master.splitlist(event.data)
+
+        if file_paths:
+            # The first file dropped
+            file_path = os.path.abspath(file_paths[0])
+
+            if os.path.isfile(file_path):
+                # Call your existing file-opening method here
+                self.dropfile = file_path
+                self.open_file_window()
+
 
     def _get_selected_line_range(self, text: Text):
         ''' helper for tab routines '''
@@ -666,17 +696,24 @@ class TKedit:
 
     def open_file_window(self, event=None):
         ''' Open an existing file in a new tkedit instance. '''
-        if self.filename and self.is_dirty:
-            if Messagebox.show_question("Do you want to save changes to " + str(self.filename) + " before Opening New File?", "Open File"):
-                self.save_file()
+        if not self.dropfile:
+            if self.filename and self.is_dirty:
+                if Messagebox.show_question("Do you want to save changes to " + str(self.filename) \
+                                            + " before Opening New File?",
+                                            "Open File"):
+                    self.save_file()
 
-        current_dir = os.path.dirname(self.filename) if self.filename else "."
+            current_dir = os.path.dirname(self.filename) if self.filename else "."
 
-        file = filedialog.askopenfilename(initialdir=current_dir,
-                                                   title="Select File",
-                                                   filetypes=(("All files", "*"),
-                                                             ("Text files", "*.txt"),
-                                                             ("Python files", "*.py")))
+            file = filedialog.askopenfilename(initialdir=current_dir,
+                                                       title="Select File",
+                                                       filetypes=(("All files", "*"),
+                                                                 ("Text files", "*.txt"),
+                                                                 ("Python files", "*.py")))
+        else:
+            file = self.dropfile
+            self.dropfile = None
+
         if file:
             # Assumes tkedit.pyc is the compiled target (may not work on Windows)
             if platform.system() == "Windows":
@@ -1480,10 +1517,7 @@ class RecentFilesManager:
             print(f"Error saving recent files: {e}")
             Messagebox.show_error(e, "Saving Recent Files")
 
-# def main():
-#     root = Window(themename="darkly")
-#     root.title("TKedit")
-#     root.geometry("500x400")
+# ------------------#
 
 def save_location():
     ''' executes at WM_DELETE_WINDOW event - see below '''
@@ -1491,8 +1525,8 @@ def save_location():
         fout.write(root.geometry())
     root.destroy()
 
-# root = Window("TKedit")
-root = Window(themename="darkly")
+# connects DnD2 the main app window
+root = TkinterDnD.Tk()
 root.title("TKedit")
 root.geometry("500x400")
 

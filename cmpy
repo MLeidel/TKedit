@@ -1,0 +1,15 @@
+#!/bin/bash
+
+if [ "$#" -lt  "1" ]
+then
+    echo "missing arguments: program to compile"
+    exit 1
+fi
+
+rm -r "__pycache__"
+
+python3 -m py_compile $1
+
+mv __pycache__/*.pyc $1"c"
+
+chmod +x $1"c"

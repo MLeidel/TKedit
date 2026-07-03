@@ -1,0 +1,275 @@
+<h1>TKedit: Light Code Editor 2026</h1>
+<h3>Made with Python, and Ttkbootstrap</h3>
+<blockquote>
+<p><em>tkinter</em> <strong>Text</strong> is not the <em>swiftest widget in the class</em>
+but still <em>packs</em> a byte.</p>
+</blockquote>
+<h2>Features</h2>
+<ul>
+<li>Syntax Highlighting (https://github.com/MLeidel/TKsyntex)</li>
+<li>Block tabs</li>
+<li>Language recognition by extention</li>
+<li>Toggle comment lines </li>
+<li>Bookmarking</li>
+<li>Auto-indentation</li>
+<li>Recent file list</li>
+<li>Open last file on startup</li>
+<li>Toggle word wrap</li>
+<li>Enclose selected ( " ' ` * _ )</li>
+<li>Find and Replace</li>
+<li>Open System Terminal</li>
+<li>Open System File Manager</li>
+<li>Context menu</li>
+<li>Backup file</li>
+<li>Markdown to HTML</li>
+<li>Themes</li>
+<li>For Linux, Windows, Mac</li>
+</ul>
+<h2>Configure</h2>
+<p>File: <strong><code>tkedit.ini</code></strong></p>
+<pre><code class="language-config">[Main]
+font=Cascadia Code
+fontsize=10
+lastfile=yes
+backup=no
+tabsz=4
+nospaces=yes
+terminal=xfce4-terminal
+filemgr=thunar
+appath=home/USER/apps/python/projects/TKedit/tkedit.pyc
+autoindent=yes
+md2html=yes
+debounce=100
+theme=cyborg
+style=material
+</code></pre>
+<p><strong>Config files:</strong></p>
+<pre><code>    lastfile
+    recent_files.json
+    tked1.png
+    tkedit.ini
+    winfo
+</code></pre>
+<p>For Windows, these files remain in the app directory (<strong>C:\TKedit</strong>)<br />
+For Linux and Mac these files are kept in <strong>~/home/<em>USER</em>/.config/tkedit</strong></p>
+<p><strong>some configuration values may differ for Windows.</strong></p>
+<pre><code>        terminal=wt
+        appath=C:\\TKedit
+        and possibly others
+</code></pre>
+<p>see <em>win_tkedit.ini</em> and <em>Mac_tkedit.ini</em> for examples</p>
+<h3>Styles</h3>
+<table>
+<thead>
+<tr>
+<th>Style Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DARK</td>
+<td></td>
+</tr>
+<tr>
+<td><code>material</code></td>
+<td>Based on Material Design</td>
+</tr>
+<tr>
+<td><code>dracula</code></td>
+<td>Purple/pink tones popular vampire-themed</td>
+</tr>
+<tr>
+<td><code>zenburn</code></td>
+<td>Low-contrast easy on the eyes</td>
+</tr>
+<tr>
+<td><code>monokai</code></td>
+<td>Classic dark theme from Sublime Text</td>
+</tr>
+<tr>
+<td><code>default</code></td>
+<td>Dark or Light</td>
+</tr>
+<tr>
+<td><code>paraiso-dark</code></td>
+<td>Paraiso Dark editor-style</td>
+</tr>
+<tr>
+<td><code>solarized-dark</code></td>
+<td>Popular low-contrast dark theme</td>
+</tr>
+<tr>
+<td><code>native</code></td>
+<td>Pygments own dark theme</td>
+</tr>
+<tr>
+<td><code>gruvbox-dark</code></td>
+<td>Retro groove warm colors</td>
+</tr>
+<tr>
+<td>LIGHT</td>
+<td></td>
+</tr>
+<tr>
+<td><code>default</code></td>
+<td>Dark or Light</td>
+</tr>
+<tr>
+<td><code>borland</code></td>
+<td>classic light/bright editor look</td>
+</tr>
+<tr>
+<td><code>bw</code></td>
+<td>black/white / high readability</td>
+</tr>
+<tr>
+<td><code>tango</code></td>
+<td>lighter Tango palette</td>
+</tr>
+<tr>
+<td><code>pastie</code></td>
+<td>often used as a light-ish palette</td>
+</tr>
+</tbody>
+</table>
+<h3>Themes</h3>
+<pre><code>Dark
+    darkly cyborg superhero solar
+
+Light    
+    sandstone yeti pulse cosmo flatly litera minty
+    lumen journal simplex cerculean
+</code></pre>
+<p><em>favorites: cyborg / material and zenburn</em></p>
+<h2>Keyboard Shortcuts</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Special Keys</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">-------------------</td>
+<td style="text-align: left;">------------------</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Control-n</strong></td>
+<td style="text-align: left;">New File</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Control-Shift-N</strong></td>
+<td style="text-align: left;">Open File in New Window</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Control-o</strong></td>
+<td style="text-align: left;">Open File</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Control-Shift-O</strong></td>
+<td style="text-align: left;">Open Recent File List</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Control-s</strong></td>
+<td style="text-align: left;">Save File</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Control-Shift-S</strong></td>
+<td style="text-align: left;">Save-As File</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Control-q</strong></td>
+<td style="text-align: left;">Close App</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Control-f</strong></td>
+<td style="text-align: left;">Find Text</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>F3</strong></td>
+<td style="text-align: left;">Find Next Text</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Control-h</strong></td>
+<td style="text-align: left;">Find - Replace Dialog</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Control-u</strong></td>
+<td style="text-align: left;">Uppercase</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Control-l</strong></td>
+<td style="text-align: left;">Lowercase</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Control-w</strong></td>
+<td style="text-align: left;">Toggle Word wrap</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Control-Shift-T</strong></td>
+<td style="text-align: left;">Open Terminal</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Control-Shift-F</strong></td>
+<td style="text-align: left;">Open File Manager</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Control-Slash</strong></td>
+<td style="text-align: left;">Line Comment</td>
+</tr>
+</tbody>
+</table>
+<h2>Bookmarks</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Keyboard</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">---------------</td>
+<td style="text-align: left;">----------------</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Control-Left-Click</strong></td>
+<td style="text-align: left;"><em>Toggle</em> Bookmark</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Control-b</strong></td>
+<td style="text-align: left;"><em>Goto</em> Next Bookmark</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Shift-Control-b</strong></td>
+<td style="text-align: left;"><em>Clear</em> Bookmarks</td>
+</tr>
+</tbody>
+</table>
+<h2>Python Modules</h2>
+<ul>
+<li>Tksyntex<ul>
+<li>source is included</li>
+</ul>
+</li>
+<li>tklinenums</li>
+<li>ttkbootstrap</li>
+<li>markdown</li>
+</ul>
+<h2>Notes</h2>
+<ul>
+<li>For markdown docs each Save generates the HTML file with the same base name.</li>
+<li>May need to adjest the "debounce" setting depending on your system.</li>
+<li>Surround selected with " ' ` _ *</li>
+<li><code>nospace</code> = <em>yes</em> - will not remove trailing spaces for .md files.</li>
+<li>For Windows all of the config files remain in the app directory.</li>
+<li>Leave Tksyntex in your app directory or move it to a python modules directory  <pre><code>PYTHONPATH=your-python-modules-directory
+</code></pre>
+</li>
+</ul>
+<blockquote>
+<p><img alt="alttext" src="images/TKrm1.png" title="title" /></p>
+</blockquote>
+<hr />

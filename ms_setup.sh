@@ -11,7 +11,7 @@ EOF
 
 echo "Setting up required packages ..."
 
-pip3 install -r requirements.txt --break-system-packages
+pip3 install -r requirements.txt
 
 echo "setting up config ..."
 

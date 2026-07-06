@@ -1,5 +1,6 @@
 #!/bin/python3
 
+# use "which python3"
 # MacOS - #!/opt/homebrew/bin/python3
 # tkedit.py
 # M Leidel 7/2026
@@ -95,7 +96,9 @@ class TKedit:
             Messagebox.show_error("Config Error", "tkedit.ini")
             sys.exit()
 
+        # some "globals"
         self.filename = None
+        self.filepriv = None
         self.is_dirty = False
         self.last_found_index = 0
         self.search_term = ""
@@ -103,6 +106,8 @@ class TKedit:
         self.indent = " " * self.tabsize
         self.bookmarks = set()
         self.dropfile = None
+
+        # now the layout and initializing
 
         frame_t = Frame(root)
         frame_t.pack(side="right", fill="both", expand=True)
@@ -127,16 +132,16 @@ class TKedit:
         hbar.config(command=self.text_area.xview)
         vbar.config(command=self.text_area.yview)
 
-        # determine colors for TkLineNumbers
-        bg="#ffffff"
+        # determine colors for TkLineNumbers, based on ttkbootstrap themes
+        bg="#ffffff"  # default is for Light Themes
         if self.theme == "darkly": bg="#222222"
         if self.theme == "cyborg": bg="#060606"
         if self.theme == "superhero": bg="#2b3e50"
         if self.theme == "solar": bg="#002b36"
         if self.theme in ["darkly","cyborg","superhero","solar"]:
-            fg="#eee"
+            fg="#eee"  # light for dark themes
         else:
-            fg="#111"
+            fg="#111"  # dark for light themes
         # Create the TkLineNumbers widget and pack it to the left
         self.linenums = TkLineNumbers(root,
                                       self.text_area,
@@ -146,17 +151,7 @@ class TKedit:
                                       colors=(fg, bg))
         self.linenums.pack(fill="y", side="left")
 
-        # Create highlighter - and font information
-        self.highlighter = SyntaxHighlighter(
-            text_widget=self.text_area,
-            language="text",
-            style_name=self.color,
-            font_name=self.fontname,
-            font_size=self.fontsize,
-            debounce_ms=self.debounce
-        )
-
-        # Create a tag to highlight the search result. ///
+        # Create a tag to highlight the search result.
         self.text_area.tag_config("highlight", background="dim gray")
 
         # File Menu
@@ -164,9 +159,12 @@ class TKedit:
         self.file_menu = Menu(self.menu_bar, tearoff=0)
         self.file_menu.add_command(label="New", accelerator="Ctrl+N", command=self.new_file)
         self.file_menu.add_command(label="New Window", accelerator="Ctrl-Shift+N", command=self.open_file_window)
+
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Open", accelerator="Ctrl+O", command=self.open_file)
+        self.file_menu.add_command(label="Open Previous", accelerator="Ctrl-P", command=self.load_previous)
         self.file_menu.add_command(label="Open Recent", accelerator="Ctrl-Shift+O", command=self.open_file_recent)
+
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Save", accelerator="Ctrl+S", command=self.save_file)
         self.file_menu.add_command(label="Save As", accelerator="Shift-Ctrl+S", command=self.save_file_as)
@@ -176,14 +174,17 @@ class TKedit:
         # Other Menu
         self.file_menu = Menu(self.menu_bar, tearoff=0)
         self.file_menu.add_command(label="Config", command=self.open_options)
+
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Find", accelerator="Ctrl+F", command=self.find_text)
         self.file_menu.add_command(label="Next", accelerator="F3", command=self.find_next)
         self.file_menu.add_command(label="Replace", accelerator="Ctrl+H", command=self.find_replace)
+
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Terminal", accelerator="Ctrl+Shift+T", command=self.open_terminal)
         self.file_menu.add_command(label="File Manager", accelerator="Ctrl+Shift+F", command=self.open_file_manager)
         self.file_menu.add_command(label="Toggle Word Wrap", accelerator="Ctrl+W", command=self.toggle_wordwrap)
+
         self.file_menu.add_separator()
         self.file_menu.add_command(label="About", command=self.about)
         self.file_menu.add_command(label="Special Keys", command=self.hotkeys)
@@ -218,6 +219,8 @@ class TKedit:
         self.text_area.bind("<Control-Button-1>", self.toggle_bookmark)
         self.text_area.bind("<Control-b>", self.next_bookmark)
         self.text_area.bind("<Control-Shift-B>", self.clear_bookmarks)
+        self.text_area.bind("<Control-p>", self.load_previous)
+
 
         if self.autoindent.lower() == 'yes':
             self.text_area.bind("<Return>", self.on_return)
@@ -228,26 +231,38 @@ class TKedit:
         self.enable_autopairs(self.text_area)  # setup []]{  [] ddd   }}()
         self.text_area.tag_configure("bookmark", background="black") # Light green highlight
 
-        self.style = Style(theme=self.theme)
+        # --- DRAG AND DROP SETUP ---
+        # Register both the master window and your text editor widget as drop targets
+        self.master.drop_target_register(tkdnd.DND_FILES)
+        self.text_area.drop_target_register(tkdnd.DND_FILES)
+        # Bind the drop event to the handler
+        self.master.dnd_bind("<<Drop>>", self.handle_drop)
+        self.text_area.dnd_bind("<<Drop>>", self.handle_drop)
+
+        # Create highlighter - font information ...
+        # using the Tksyntex module
+        self.highlighter = SyntaxHighlighter(
+            text_widget=self.text_area,
+            language="text",
+            style_name=self.color,
+            font_name=self.fontname,
+            font_size=self.fontsize,
+            debounce_ms=self.debounce
+        )
+
+        self.style = Style(theme=self.theme)  # set the ttkbootstrap theme
+
 
         if self.theme in ["darkly","cyborg","superhero","solar"]:
             self.style.configure('TButton', background=self.style.colors.dark, foreground=self.style.colors.light)
         else:
             self.style.configure('TButton', background=self.style.colors.light, foreground=self.style.colors.dark)
 
-        # --- DRAG AND DROP SETUP ---
-        # Register both the master window and your text editor widget as drop targets
-        self.master.drop_target_register(tkdnd.DND_FILES)
-        self.text_area.drop_target_register(tkdnd.DND_FILES)
-
-        # Bind the drop event to the handler
-        self.master.dnd_bind("<<Drop>>", self.handle_drop)
-        self.text_area.dnd_bind("<<Drop>>", self.handle_drop)
-
 
         # open file from command line
         if len(sys.argv) > 1:
             self.filename = sys.argv[1]
+            self.filepriv = self.filename
             self.load_file()
         elif self.open_last.lower() == "yes":
             if os.path.exists(lastpath):
@@ -582,8 +597,7 @@ class TKedit:
     def load_file(self):
         ''' helper method to find file type and display content for editing
             With no extention assume text/.txt - no highlighting
-            Also when ext not found assume text/.txt
-        '''
+            Also when ext not found assume text/.txt '''
         lang = self.extension_get_language() # set the file type via its extension
         if self.has_highlight:
             self.highlighter.set_language(lang)
@@ -598,6 +612,7 @@ class TKedit:
                 self.text_area.edit_modified(False)
                 self.master.title((self.filename or "Untitled"))
                 self.highlighter.highlight()
+
         except Exception as e:
             # assume new file unless open_last
             if self.open_last.lower() == 'yes':
@@ -684,12 +699,25 @@ class TKedit:
 
         current_dir = os.path.dirname(self.filename) if self.filename else "."
 
+        if self.filename:
+            self.filepriv = self.filename
+
         self.filename = filedialog.askopenfilename(initialdir=current_dir,
                                                    title="Select File",
                                                    filetypes=(("All files", "*"),
                                                              ("Text files", "*.txt"),
                                                              ("Python files", "*.py")))
         if self.filename:
+            self.load_file()
+        return "break"
+
+
+    def load_previous(self, event=None):
+        ''' opens this session's previously opened file '''
+        if self.filepriv:
+            filename = self.filepriv
+            self.filepriv = self.filename
+            self.filename = filename
             self.load_file()
         return "break"
 
@@ -852,6 +880,8 @@ class TKedit:
             selection = listbox.curselection()
             if selection:
                 chosen_file = listbox.get(selection[0])
+                if self.filename:
+                    self.filepriv = self.filename
                 self.filename = chosen_file
                 self.load_file()
                 popup.destroy()
@@ -1272,6 +1302,7 @@ SPECIAL KEYS    DESCRIPTION
 
 Control-o ... Open File
 Control-n ... New File
+Control-p ... Open Previous File
 Control-Shift-O ... Open Recent File List
 Control-Shift-W ... Open File New Window
 Control-Shift-S ... Save-As File
@@ -1390,7 +1421,7 @@ Control-Slash ... Toggle Line Comment
         toast(" Cleared All bookmarks. ", 1900)
         return "break"
 
-# Startup Splash
+# Startup Splash: needed to initialize theme for dialogs
 
 def auto_close_entry_dialog(master, close_ms=3000, width_chars=12):
     '''
@@ -1443,9 +1474,6 @@ def toast(t_text, t_time=2000):
     - t_text: string to display
     - t_time: duration in milliseconds
     '''
-    # top = root.winfo_toplevel()  # top-level window to anchor the toast
-    # t = Toplevel(top)
-    # t.geometry('+%d+%d' % (top.winfo_x(), top.winfo_y()))
     top = root.winfo_toplevel()
     top.update_idletasks()
     x = top.winfo_rootx()
@@ -1530,12 +1558,13 @@ root = TkinterDnD.Tk()
 root.title("TKedit")
 root.geometry("500x400")
 
+# opening new windows successively will offset top metric
 if os.path.isfile(winpath):
     with open(winpath, "r", encoding="utf-8") as f:
         lcoor = f.read()
-    text = lcoor  # now increment the "top" value by 3 pixels to slightly push down a new window
+    text = lcoor  # now increment the "top" value by 28 pixels to slightly push down a new window
     x = text.rfind('+') + 1
-    top = int(text[x:]) + 28
+    top = int(text[x:]) + 28  # pushes down "top" so previous window is still exposed
     text = text[:x] + str(top)  # next write the modified geo for next new window
     with open(winpath, "w", encoding="utf-8") as fout:
         fout.write(text)

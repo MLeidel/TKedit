@@ -1,0 +1,3 @@
+ttkbootstrap
+tklinenums
+tkinterdnd2

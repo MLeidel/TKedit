@@ -109,6 +109,7 @@ see _win_tkedit.ini_ and _Mac_tkedit.ini_ for examples
 | **Control-n**| New File |
 | **Control-Shift-N**|Open File in New Window|
 | **Control-o**| Open File|  
+| **Control-p**| Open Previous File|
 | **Control-Shift-O**|Open Recent File List| 
 | **Control-s**| Save File|
 | **Control-Shift-S**|Save-As File|

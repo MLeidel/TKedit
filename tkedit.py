@@ -222,7 +222,6 @@ class TKedit:
         self.text_area.bind("<Control-Shift-B>", self.clear_bookmarks)
         self.text_area.bind("<Control-p>", self.load_previous)
 
-
         if self.autoindent.lower() == 'yes':
             self.text_area.bind("<Return>", self.on_return)
         for quote in ('"', "'", "`", "*", "_"):
@@ -272,7 +271,6 @@ class TKedit:
                     self.load_file()
 
     #-----------End of Init----------#
-
 
     def handle_drop(self, event):
         ''' This function runs when a file is dropped onto the app '''
@@ -1325,6 +1323,7 @@ Control-f ... Find Text
 F3 ... Find Next
 Control-h ... Find - Replace Text
 Control-w ... Toggle Word wrap
+Control-a ... Select All
 Control-Shift-T ... Open Terminal
 Control-Shift-F ... Open File Manager
 Control-Slash ... Toggle Line Comment

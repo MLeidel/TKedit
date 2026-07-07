@@ -124,6 +124,23 @@ see _win_tkedit.ini_ and _Mac_tkedit.ini_ for examples
 | **Control-Shift-F**| Open File Manager |
 | **Control-Slash**| Line Comment |
 
+and others ...
+
+        ctl-End
+        ctl-Home
+        ctl ->
+        ctl <-
+        ctl-k
+        ctl-a
+        shft-End
+        shft-Home
+        shft-ctl ->
+        shft-ctl <-
+        shft ->
+        shft <-
+        shft up-arrow/down-arrow
+        shft-ctl up-arrow/down-arrow
+        
 ## Bookmarks
 
 |Keyboard    | Description |
@@ -144,10 +161,13 @@ see _win_tkedit.ini_ and _Mac_tkedit.ini_ for examples
 
 ## Notes
 
+- _Open Previous File_ opens the previous file you had open in the current session  
+    whether you saved it or not.  
+    Saved files will appear in the "_Recent File List_"
 - For markdown docs each Save generates the HTML file with the same base name.
 - May need to adjest the "debounce" setting depending on your system.
 - Surround selected with " ' \` \_ \*
-- `nospace` = _yes_ - will not remove trailing spaces for .md files.
+- `nospace` = _yes_ - will **not** remove trailing spaces for .md files.
 - For Windows all of the config files remain in the app directory.
 - Leave Tksyntex in your app directory or move it to a python modules directory  
         

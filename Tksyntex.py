@@ -111,15 +111,14 @@ class SyntaxHighlighter:
         self.highlight()
 
     # ------------------------------------------------------------------
-    # Core highlighting
+    # Core highlighting 2.0
     # ------------------------------------------------------------------
 
     def highlight(self):
-        """Tokenize content and apply syntax highlighting tags."""
         code = self.text_widget.get("1.0", tk.END)
+        available_tags = set(self.text_widget.tag_names())
 
-        # Remove all existing highlight tags
-        for tag in self.text_widget.tag_names():
+        for tag in available_tags:
             if tag != "sel":
                 self.text_widget.tag_remove(tag, "1.0", tk.END)
 
@@ -128,21 +127,19 @@ class SyntaxHighlighter:
         for token, content in lex(code, self.lexer):
             start = f"{row}.{col}"
 
-            # Track position across newlines (critical for multiline strings)
-            newlines = content.count('\n')
-            if newlines:
-                row += newlines
-                col = len(content.split('\n')[-1])
+            parts = content.split('\n')
+            if len(parts) > 1:
+                row += len(parts) - 1
+                col = len(parts[-1])
             else:
                 col += len(content)
 
             end = f"{row}.{col}"
 
-            # Walk up token hierarchy to find the nearest configured tag
             tag_token = token
             while tag_token is not Token:
                 tag_name = str(tag_token)
-                if tag_name in self.text_widget.tag_names():
+                if tag_name in available_tags:
                     self.text_widget.tag_add(tag_name, start, end)
                     break
                 tag_token = tag_token.parent

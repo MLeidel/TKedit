@@ -194,6 +194,7 @@ class TKedit:
         self.master.config(menu=self.menu_bar)
 
         # Bind keyboard shortcuts
+        self.text_area.bind('<Control-a>', self.select_all)
         self.text_area.bind('<Control-n>', self.new_file)
         self.text_area.bind("<Control-o>", self.open_file)
         self.text_area.bind("<Shift-Control-O>", self.open_file_recent)
@@ -516,6 +517,7 @@ class TKedit:
 
 
     def convert_to_uppercase(self, event=None):
+        ''' Control-u '''
         try:
             # Check if there is a selection
             selected_text = self.text_area.get(SEL_FIRST, SEL_LAST)
@@ -530,6 +532,7 @@ class TKedit:
 
 
     def convert_to_lowercase(self, event=None):
+        ''' Control-l '''
         try:
             # Check if there is a selection
             selected_text = self.text_area.get(SEL_FIRST, SEL_LAST)
@@ -539,6 +542,14 @@ class TKedit:
         except TclError:
             # TclError is raised when there is no selection
             Messagebox.show_warning("Please select some text first.", "No Selection")
+
+
+    def select_all(self, event=None):
+        ''' Control-a Select All '''
+        self.text_area.tag_add('sel', '1.0', 'end')
+        self.text_area.mark_set('insert', '1.0')
+        self.text_area.see('insert')
+        return 'break'
 
 
     def strip_trailing_whitespace(self):

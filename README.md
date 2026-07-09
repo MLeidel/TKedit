@@ -124,6 +124,7 @@ see _win_tkedit.ini_ and _Mac_tkedit.ini_ for examples
 | **Control-Shift-T**| Open Terminal |
 | **Control-Shift-F**| Open File Manager |
 | **Alt-z**| Snippets Manager |
+| **Shift-Control-Z**| Snippets Manager for Mac |
 | **Control-Slash**| Line Comment |
 
 and others ...

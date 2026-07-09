@@ -23,6 +23,7 @@ from ttkbootstrap import *
 from ttkbootstrap.constants import *
 from ttkbootstrap.dialogs import Querybox
 from ttkbootstrap.dialogs import Messagebox
+from ttkbootstrap.widgets import ToolTip
 from ttkbootstrap import Style
 import tkinterdnd2 as tkdnd
 from tkinterdnd2 import DND_FILES, TkinterDnD
@@ -48,7 +49,7 @@ if platform.system() == "Windows":
     winpath  = Path("C:\\", "TKedit", "winfo")
     appicon  = Path("C:\\", "TKedit", "tked1.png")
     recents  = Path("C:\\", "TKedit", "recent_files.json")
-    snipdir  = Path("C:\\", "TKedit", "snippits")
+    snipdir  = Path("C:\\", "TKedit", "snippets")
 elif platform.system() == "Darwin":
     user = os.environ.get("USER")
     inipath = Path("/Users",user,".config","tkedit","tkedit.ini")
@@ -56,7 +57,7 @@ elif platform.system() == "Darwin":
     winpath = Path("/Users",user,".config","tkedit","winfo")
     appicon = Path("/Users",user,".config","tkedit","tked1.png")
     recents = Path("/Users",user,".config","tkedit","recent_files.json")
-    snipdir = Path("/Users",user,".config","tkedit","snippits")
+    snipdir = Path("/Users",user,".config","tkedit","snippets")
 else:
     # Linux will store the config files in ~/.config/TKedit directory
     user = os.environ.get("USER")
@@ -65,7 +66,7 @@ else:
     winpath = Path("/home",user,".config","tkedit","winfo")
     appicon = Path("/home",user,".config","tkedit","tked1.png")
     recents = Path("/home",user,".config","tkedit","recent_files.json")
-    snipdir = Path("/home",user,".config","tkedit","snippits")
+    snipdir = Path("/home",user,".config","tkedit","snippets")
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 class TKedit:
@@ -229,6 +230,7 @@ class TKedit:
         self.text_area.bind("<Control-Shift-B>", self.clear_bookmarks)
         self.text_area.bind("<Control-p>", self.load_previous)
         self.text_area.bind("<Alt-z>", self.open_snippet_window)
+        self.text_area.bind("<Shift-Control-Z>", self.open_snippet_window)  # for Mac
 
         if self.autoindent.lower() == 'yes':
             self.text_area.bind("<Return>", self.on_return)
@@ -857,6 +859,7 @@ class TKedit:
         popup.title("Open Recent File")
         popup.geometry("450x400")
         popup.resizable(False, False)
+        popup.attributes("-topmost", True)
 
         # Ensure focus goes to the popup
         popup.grab_set()
@@ -1211,23 +1214,37 @@ class TKedit:
         return "break"
 
 
+    def has_selection(self, text_widget) -> bool:
+        # "sel" is the selection tag in Tk Text widgets
+        ranges = text_widget.tag_ranges("sel")
+        return bool(ranges) and (text_widget.compare(ranges[0], "!=", ranges[1]))
+
+
     def poptxt(self, n):
         ''' Routes txt context menu actions '''
         if n == 1:  # Copy
-            root.clipboard_clear()  # clear clipboard contents
-            root.clipboard_append(self.text_area.selection_get())  # append new value to clipbaord
+            if self.has_selection(self.text_area):
+                content = self.text_area.selection_get()
+                root.clipboard_clear()  # clear clipboard contents
+                root.clipboard_append(self.text_area.selection_get())  # append new value to clipbaord
+            else:
+                Messagebox.show_warning("Nothing Selected", "Copy")
         elif n == 2:  # Paste
             self.paste()  # revised paste function
         elif n == 3:  # Select All
             self.copy_all(self.text_area)
-        elif n == 4:   # search for selected text using browser
-            search = self.text_area.selection_get()
-            if len(search) > 2:
-                webbrowser.open("https://www.google.com/search?q=" + search)
-        elif n == 5:  # find text in the response window
+        elif n == 4:  # find text in the response window
             self.find_text()
-        elif n == 6:  # keyboard help
-            self.display_help()
+        elif n == 5:  # find text in the response window
+            self.find_replace()
+        elif n == 6:   # search for selected text using browser
+            if self.has_selection(self.text_area):
+                search = self.text_area.selection_get()
+                webbrowser.open("https://www.google.com/search?q=" + search)
+            else:
+                Messagebox.show_warning("Nothing Selected", "Internet Search")
+        elif n == 7:  # Recent Files Picker
+            self.open_file_recent()
 
 
     def show_popup(self, event=None):
@@ -1244,8 +1261,10 @@ class TKedit:
             ("Copy", lambda: (popup.destroy(), self.poptxt(1))),
             ("Paste", lambda: (popup.destroy(), self.poptxt(2))),
             ("Copy All", lambda: (popup.destroy(), self.poptxt(3))),
-            ("Google Selection", lambda: (popup.destroy(), self.poptxt(4))),
-            ("Find Text", lambda: (popup.destroy(), self.poptxt(5))),
+            ("Find Text", lambda: (popup.destroy(), self.poptxt(4))),
+            ("Replace Text", lambda: (popup.destroy(), self.poptxt(5))),
+            ("Internet Search", lambda: (popup.destroy(), self.poptxt(6))),
+            ("Open Recents", lambda: (popup.destroy(), self.poptxt(7))),
             ("Close", lambda: (popup.destroy())),
         ]
 
@@ -1335,7 +1354,8 @@ Control-a ... Select All
 Control-Shift-T ... Open Terminal
 Control-Shift-F ... Open File Manager
 Control-Slash ... Toggle Line Comment
-Alt-z ... Snippits
+Alt-z ... snippets
+Shift-Control-Z ... snippets (for Mac)
 '''
         Messagebox.show_info(msg, "Key Commands")
 
@@ -1376,7 +1396,7 @@ Alt-z ... Snippits
         return text_widget
 
 
-    # snippits
+    # snippets
 
     def open_snippet_window(self, event=None):
         SnippetWindow(self, self.text_area, self.highlighter, snipdir)
@@ -1405,6 +1425,7 @@ Alt-z ... Snippits
         # Force tklinenums to redraw if needed
         self.linenums.redraw()
         return "break" # Prevents default Tkinter behavior for Ctrl+Click
+
 
     def next_bookmark(self, event=None):
         ''' Jump to next bookmark '''
@@ -1576,11 +1597,12 @@ class RecentFilesManager:
 
 class SnippetWindow(Toplevel):
     '''  '''
-    def __init__(self, master, editor_text, highlighter, snippet_dir="snippits"):
+    def __init__(self, master, editor_text, highlighter, snippet_dir="snippets"):
         super().__init__(master)
         self.title("Snippets")
         self.geometry("450x500")
         self.minsize(350, 300)
+        self.attributes("-topmost", True)
 
         self.editor_text = editor_text
         self.snippet_dir = Path(snippet_dir)
@@ -1593,7 +1615,7 @@ class SnippetWindow(Toplevel):
         self.reload_snippets()
 
     def _build_ui(self):
-        # Listbox + scrollbar
+        ''' Build Snippets Window containing a listbox '''
         frame = Frame(self, padding=10)
         frame.pack(fill="both", expand=True)
 
@@ -1616,7 +1638,17 @@ class SnippetWindow(Toplevel):
         btn_frame.pack(fill="x")
 
         self.insert_btn = Button(btn_frame, text="Insert", command=self.insert_snippets)
+        ToolTip(self.insert_btn,
+                text="insert into current open file",
+                bootstyle=(INVERSE),
+                wraplength=80)
+
         self.add_btn = Button(btn_frame, text="Add", command=self.add_snippet)
+        ToolTip(self.add_btn,
+                text="Make snippet from clipboard content",
+                bootstyle=(INVERSE),
+                wraplength=80)
+
         self.delete_btn = Button(btn_frame, text="Delete", command=self.delete_snippets)
         self.close_btn = Button(btn_frame, text="Close", command=self.close_window)
 
@@ -1646,7 +1678,7 @@ class SnippetWindow(Toplevel):
         selected_files = self.get_selected_files()
 
         if not selected_files:
-            Messagebox.show_info("Insert Snippet", "Please select one or more snippets.")
+            Messagebox.show_info("Please select one or more snippets.", "Insert Snippet")
             return
 
         snippets = []
@@ -1656,7 +1688,7 @@ class SnippetWindow(Toplevel):
                 with open(path, "r", encoding="utf-8") as f:
                     snippets.append(f.read())
             except Exception as e:
-                Messagebox.show_error("Insert Snippet", f"Could not read {fname}:\n{e}")
+                Messagebox.show_error(f"Could not read {fname}:\n{e}", "Insert Snippet")
                 return
 
         insert_text = "\n\n".join(snippets)
@@ -1685,13 +1717,13 @@ class SnippetWindow(Toplevel):
         try:
             clipboard_text = self.clipboard_get()
         except TclError:
-            Messagebox.show_error("Add Snippet", "Clipboard is empty or unavailable.")
+            Messagebox.show_error("Clipboard is empty or unavailable.", "Add Snippet")
             return
 
         if path.exists():
             overwrite = Messagebox.askyesno(
-                "Overwrite Snippet",
-                f"Snippet '{fname}' already exists.\nOverwrite it?"
+                f"Snippet '{fname}' already exists.\nOverwrite it?",
+                "Overwrite Snippet"
             )
             if not overwrite:
                 return
@@ -1700,23 +1732,23 @@ class SnippetWindow(Toplevel):
             with open(path, "w", encoding="utf-8") as f:
                 f.write(clipboard_text)
         except Exception as e:
-            Messagebox.show_error("Add Snippet", f"Could not write snippet:\n{e}")
+            Messagebox.show_error(f"Could not write snippet:\n{e}", "Add Snippet")
             return
 
         self.reload_snippets()
-        Messagebox.show_info("Add Snippet", f"Snippet '{fname}' saved.")
+        Messagebox.show_info(f"Snippet '{fname}' saved.", "Add Snippet")
 
     def delete_snippets(self):
         '''Delete selected snippet files.'''
         selected_files = self.get_selected_files()
 
         if not selected_files:
-            Messagebox.show_info("Delete Snippet", "Please select one or more snippets.")
+            Messagebox.show_info("Please select one or more snippets.", "Delete Snippet")
             return
 
         confirm = Messagebox.yesno(
-            "Delete Snippet",
-            f"Delete {len(selected_files)} selected snippet(s)?"
+            f"Delete {len(selected_files)} selected snippet(s)?",
+            "Delete Snippet"
         )
         if confirm == "No":
             return
@@ -1732,7 +1764,7 @@ class SnippetWindow(Toplevel):
         self.reload_snippets()
 
         if errors:
-            Messagebox.show_error("Delete Snippet", "Some files could not be deleted:\n\n" + "\n".join(errors))
+            Messagebox.show_error("Some files could not be deleted:\n\n" + "\n".join(errors), "Delete Snippet")
 
     def close_window(self):
         self.destroy()

@@ -48,6 +48,7 @@ if platform.system() == "Windows":
     winpath  = Path("C:\\", "TKedit", "winfo")
     appicon  = Path("C:\\", "TKedit", "tked1.png")
     recents  = Path("C:\\", "TKedit", "recent_files.json")
+    snipdir  = Path("C:\\", "TKedit", "snippits")
 elif platform.system() == "Darwin":
     user = os.environ.get("USER")
     inipath = Path("/Users",user,".config","tkedit","tkedit.ini")
@@ -55,6 +56,7 @@ elif platform.system() == "Darwin":
     winpath = Path("/Users",user,".config","tkedit","winfo")
     appicon = Path("/Users",user,".config","tkedit","tked1.png")
     recents = Path("/Users",user,".config","tkedit","recent_files.json")
+    snipdir = Path("/Users",user,".config","tkedit","snippits")
 else:
     # Linux will store the config files in ~/.config/TKedit directory
     user = os.environ.get("USER")
@@ -63,6 +65,7 @@ else:
     winpath = Path("/home",user,".config","tkedit","winfo")
     appicon = Path("/home",user,".config","tkedit","tked1.png")
     recents = Path("/home",user,".config","tkedit","recent_files.json")
+    snipdir = Path("/home",user,".config","tkedit","snippits")
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 class TKedit:
@@ -154,7 +157,8 @@ class TKedit:
         # Create a tag to highlight the search result.
         self.text_area.tag_config("highlight", background="dim gray")
 
-        # File Menu
+        # "File" Menu
+
         self.menu_bar = Menu(master)
         self.file_menu = Menu(self.menu_bar, tearoff=0)
         self.file_menu.add_command(label="New", accelerator="Ctrl+N", command=self.new_file)
@@ -162,8 +166,8 @@ class TKedit:
 
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Open", accelerator="Ctrl+O", command=self.open_file)
-        self.file_menu.add_command(label="Open Previous", accelerator="Ctrl-P", command=self.load_previous)
-        self.file_menu.add_command(label="Open Recent", accelerator="Ctrl-Shift+O", command=self.open_file_recent)
+        self.file_menu.add_command(label="Open Recents", accelerator="Ctrl-Shift+O", command=self.open_file_recent)
+        self.file_menu.add_command(label="Open Prior", accelerator="Ctrl-P", command=self.load_previous)
 
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Save", accelerator="Ctrl+S", command=self.save_file)
@@ -171,7 +175,9 @@ class TKedit:
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Close", accelerator="Ctrl+Q", command=self.close_file)
         self.menu_bar.add_cascade(label="File", menu=self.file_menu)
-        # Other Menu
+
+        # "Other" Menu
+
         self.file_menu = Menu(self.menu_bar, tearoff=0)
         self.file_menu.add_command(label="Config", command=self.open_options)
 
@@ -179,11 +185,12 @@ class TKedit:
         self.file_menu.add_command(label="Find", accelerator="Ctrl+F", command=self.find_text)
         self.file_menu.add_command(label="Next", accelerator="F3", command=self.find_next)
         self.file_menu.add_command(label="Replace", accelerator="Ctrl+H", command=self.find_replace)
+        self.file_menu.add_command(label="Toggle Word Wrap", accelerator="Ctrl+W", command=self.toggle_wordwrap)
 
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Terminal", accelerator="Ctrl+Shift+T", command=self.open_terminal)
         self.file_menu.add_command(label="File Manager", accelerator="Ctrl+Shift+F", command=self.open_file_manager)
-        self.file_menu.add_command(label="Toggle Word Wrap", accelerator="Ctrl+W", command=self.toggle_wordwrap)
+        self.file_menu.add_command(label="Snippets", accelerator="Alt+Z", command=self.open_snippet_window)
 
         self.file_menu.add_separator()
         self.file_menu.add_command(label="About", command=self.about)
@@ -221,6 +228,7 @@ class TKedit:
         self.text_area.bind("<Control-b>", self.next_bookmark)
         self.text_area.bind("<Control-Shift-B>", self.clear_bookmarks)
         self.text_area.bind("<Control-p>", self.load_previous)
+        self.text_area.bind("<Alt-z>", self.open_snippet_window)
 
         if self.autoindent.lower() == 'yes':
             self.text_area.bind("<Return>", self.on_return)
@@ -376,7 +384,7 @@ class TKedit:
 
 
     def toggle_line_comments(self, event=None):
-        """
+        '''
         Toggle line comments in a Tkinter Text widget.
 
         Behavior:
@@ -387,7 +395,7 @@ class TKedit:
         - For uncomment:
             remove the marker if present at that same indentation position.
         - Uses '# ' for Python/shell-like files, otherwise '// '.
-        """
+        '''
         text = self.text_area
         filename = self.filename
 
@@ -1327,6 +1335,7 @@ Control-a ... Select All
 Control-Shift-T ... Open Terminal
 Control-Shift-F ... Open File Manager
 Control-Slash ... Toggle Line Comment
+Alt-z ... Snippits
 '''
         Messagebox.show_info(msg, "Key Commands")
 
@@ -1365,6 +1374,13 @@ Control-Slash ... Toggle Line Comment
         # Only intercept key presses; no caret “fix” on mouse/selection changes.
         text_widget.bind("<KeyPress>", on_keypress, add="+")
         return text_widget
+
+
+    # snippits
+
+    def open_snippet_window(self, event=None):
+        SnippetWindow(self, self.text_area, self.highlighter, snipdir)
+
 
     # Bookmarks
 
@@ -1554,6 +1570,172 @@ class RecentFilesManager:
         except Exception as e:
             print(f"Error saving recent files: {e}")
             Messagebox.show_error(e, "Saving Recent Files")
+
+
+
+
+class SnippetWindow(Toplevel):
+    '''  '''
+    def __init__(self, master, editor_text, highlighter, snippet_dir="snippits"):
+        super().__init__(master)
+        self.title("Snippets")
+        self.geometry("450x500")
+        self.minsize(350, 300)
+
+        self.editor_text = editor_text
+        self.snippet_dir = Path(snippet_dir)
+        self.highlighter = highlighter
+        self.snippet_dir.mkdir(parents=True, exist_ok=True)
+
+        self.protocol("WM_DELETE_WINDOW", self.close_window)
+
+        self._build_ui()
+        self.reload_snippets()
+
+    def _build_ui(self):
+        # Listbox + scrollbar
+        frame = Frame(self, padding=10)
+        frame.pack(fill="both", expand=True)
+
+        list_frame = Frame(frame)
+        list_frame.pack(fill="both", expand=True)
+
+        self.listbox = Listbox(
+            list_frame,
+            selectmode=EXTENDED,
+            activestyle="dotbox"
+        )
+        self.listbox.pack(side="left", fill="both", expand=True)
+
+        scrollbar = Scrollbar(list_frame, orient="vertical", command=self.listbox.yview)
+        scrollbar.pack(side="right", fill="y")
+        self.listbox.configure(yscrollcommand=scrollbar.set)
+
+        # Buttons
+        btn_frame = Frame(frame, padding=(0, 10, 0, 0))
+        btn_frame.pack(fill="x")
+
+        self.insert_btn = Button(btn_frame, text="Insert", command=self.insert_snippets)
+        self.add_btn = Button(btn_frame, text="Add", command=self.add_snippet)
+        self.delete_btn = Button(btn_frame, text="Delete", command=self.delete_snippets)
+        self.close_btn = Button(btn_frame, text="Close", command=self.close_window)
+
+        self.insert_btn.pack(side="left", expand=True, fill="x", padx=(0, 5))
+        self.add_btn.pack(side="left", expand=True, fill="x", padx=5)
+        self.delete_btn.pack(side="left", expand=True, fill="x", padx=5)
+        self.close_btn.pack(side="left", expand=True, fill="x", padx=(5, 0))
+
+    def reload_snippets(self):
+        '''Read snippet filenames from the directory and display them sorted.'''
+        self.listbox.delete(0, END)
+
+        files = sorted(
+            [p.name for p in self.snippet_dir.iterdir() if p.is_file()]
+        )
+
+        for fname in files:
+            self.listbox.insert(END, fname)
+
+    def get_selected_files(self):
+        '''Return list of selected filenames in listbox order.'''
+        selected_indices = self.listbox.curselection()
+        return [self.listbox.get(i) for i in selected_indices]
+
+    def insert_snippets(self):
+        '''Insert selected snippet files into the editor Text widget.'''
+        selected_files = self.get_selected_files()
+
+        if not selected_files:
+            Messagebox.show_info("Insert Snippet", "Please select one or more snippets.")
+            return
+
+        snippets = []
+        for fname in selected_files:
+            path = self.snippet_dir / fname
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    snippets.append(f.read())
+            except Exception as e:
+                Messagebox.show_error("Insert Snippet", f"Could not read {fname}:\n{e}")
+                return
+
+        insert_text = "\n\n".join(snippets)
+        self.editor_text.insert(INSERT, insert_text)
+        self.highlighter.highlight()
+
+    def add_snippet(self):
+        '''Prompt for filename and write clipboard contents to a new snippet file.'''
+        # fname = simpledialog.askstring("Add Snippet", "Enter snippet file name:")
+        fname = Querybox.get_string(
+            prompt="Enter snippet file name:",
+            title="Add Snippet"
+        )
+
+        if not fname:
+            return
+
+        fname = fname.strip()
+
+        # Optional: if user did not include extension, add one
+        # if not os.path.splitext(fname)[1]:
+        #     fname += ".txt"
+
+        path = self.snippet_dir / fname
+
+        try:
+            clipboard_text = self.clipboard_get()
+        except TclError:
+            Messagebox.show_error("Add Snippet", "Clipboard is empty or unavailable.")
+            return
+
+        if path.exists():
+            overwrite = Messagebox.askyesno(
+                "Overwrite Snippet",
+                f"Snippet '{fname}' already exists.\nOverwrite it?"
+            )
+            if not overwrite:
+                return
+
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(clipboard_text)
+        except Exception as e:
+            Messagebox.show_error("Add Snippet", f"Could not write snippet:\n{e}")
+            return
+
+        self.reload_snippets()
+        Messagebox.show_info("Add Snippet", f"Snippet '{fname}' saved.")
+
+    def delete_snippets(self):
+        '''Delete selected snippet files.'''
+        selected_files = self.get_selected_files()
+
+        if not selected_files:
+            Messagebox.show_info("Delete Snippet", "Please select one or more snippets.")
+            return
+
+        confirm = Messagebox.yesno(
+            "Delete Snippet",
+            f"Delete {len(selected_files)} selected snippet(s)?"
+        )
+        if confirm == "No":
+            return
+
+        errors = []
+        for fname in selected_files:
+            path = self.snippet_dir / fname
+            try:
+                path.unlink()
+            except Exception as e:
+                errors.append(f"{fname}: {e}")
+
+        self.reload_snippets()
+
+        if errors:
+            Messagebox.show_error("Delete Snippet", "Some files could not be deleted:\n\n" + "\n".join(errors))
+
+    def close_window(self):
+        self.destroy()
 
 # ------------------#
 

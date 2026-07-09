@@ -15,6 +15,7 @@ but still _packs_ a byte.
 - Auto-indentation
 - Drag n Drop
 - Recent file list
+- Snippets
 - Open last file on startup
 - Toggle word wrap
 - Enclose selected ( " ' ` * _ )
@@ -32,21 +33,21 @@ but still _packs_ a byte.
 File: **`tkedit.ini`**
 
 ```config
-[Main]
-font=Cascadia Code
-fontsize=10
-lastfile=yes
-backup=no
-tabsz=4
-nospaces=yes
-terminal=xfce4-terminal
-filemgr=thunar
-appath=home/USER/apps/python/projects/TKedit/tkedit.pyc
-autoindent=yes
-md2html=yes
-debounce=100
-theme=cyborg
-style=material
+    [Main]
+    font=Cascadia Code
+    fontsize=10
+    lastfile=yes
+    backup=no
+    tabsz=4
+    nospaces=yes
+    terminal=xfce4-terminal
+    filemgr=thunar
+    appath=home/USER/apps/python/projects/TKedit/tkedit.pyc
+    autoindent=yes
+    md2html=yes
+    debounce=100
+    theme=cyborg
+    style=material
 ```
 
 **Config files:**
@@ -122,6 +123,7 @@ see _win_tkedit.ini_ and _Mac_tkedit.ini_ for examples
 | **Control-w**| Toggle Word wrap |  
 | **Control-Shift-T**| Open Terminal |
 | **Control-Shift-F**| Open File Manager |
+| **Alt-z**| Snippets Manager |
 | **Control-Slash**| Line Comment |
 
 and others ...

@@ -1,9 +1,10 @@
-#!/bin/python3
+#!/opt/homebrew/bin/python3
 
-# use "which python3"
-# MacOS - #!/opt/homebrew/bin/python3
 # tkedit.py
 # M Leidel 7/2026
+#     use "which python3" to find path to python3
+#     MacOS - #!/opt/homebrew/bin/python3
+
 
 import os
 import sys
@@ -18,7 +19,6 @@ from pathlib import Path
 from tkinter import Listbox
 from tkinter import filedialog
 from tkinter import TclError
-from tkinter.font import Font
 from ttkbootstrap import *
 from ttkbootstrap.constants import *
 from ttkbootstrap.dialogs import Querybox
@@ -32,7 +32,7 @@ import markdown
 from Tksyntex import SyntaxHighlighter
 
 # selection parameters
-word_re = re.compile(r"[^()\[\],\.\-\s=\"\';:]+")
+word_re = re.compile(r"[^()\[\],\.\-\s=\"\';:\/]+")
 
 # language identification
 lx = [".txt",".py",".js",".c",".java",".html",".css",".go",".rs",".sh",".json",".sql",".md",".ini", ".h", ".cpp"]
@@ -47,7 +47,7 @@ if platform.system() == "Windows":
     inipath  = Path("C:\\", "TKedit", "tkedit.ini")
     lastpath = Path("C:\\", "TKedit", "lastfile")
     winpath  = Path("C:\\", "TKedit", "winfo")
-    appicon  = Path("C:\\", "TKedit", "tked1.png")
+    appicon  = Path("C:\\", "TKedit", "tkedit256.png")
     recents  = Path("C:\\", "TKedit", "recent_files.json")
     snipdir  = Path("C:\\", "TKedit", "snippets")
 elif platform.system() == "Darwin":
@@ -55,7 +55,7 @@ elif platform.system() == "Darwin":
     inipath = Path("/Users",user,".config","tkedit","tkedit.ini")
     lastpath = Path("/Users",user,".config","tkedit","lastfile")
     winpath = Path("/Users",user,".config","tkedit","winfo")
-    appicon = Path("/Users",user,".config","tkedit","tked1.png")
+    appicon = Path("/Users",user,".config","tkedit","tkedit256.png")
     recents = Path("/Users",user,".config","tkedit","recent_files.json")
     snipdir = Path("/Users",user,".config","tkedit","snippets")
 else:
@@ -64,7 +64,7 @@ else:
     inipath = Path("/home",user,".config","tkedit","tkedit.ini")
     lastpath = Path("/home",user,".config","tkedit","lastfile")
     winpath = Path("/home",user,".config","tkedit","winfo")
-    appicon = Path("/home",user,".config","tkedit","tked1.png")
+    appicon = Path("/home",user,".config","tkedit","tkedit256.png")
     recents = Path("/home",user,".config","tkedit","recent_files.json")
     snipdir = Path("/home",user,".config","tkedit","snippets")
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -163,7 +163,7 @@ class TKedit:
         self.menu_bar = Menu(master)
         self.file_menu = Menu(self.menu_bar, tearoff=0)
         self.file_menu.add_command(label="New", accelerator="Ctrl+N", command=self.new_file)
-        self.file_menu.add_command(label="New Window", accelerator="Ctrl-Shift+N", command=self.open_file_window)
+        self.file_menu.add_command(label="New Window", accelerator="Ctrl-Shift+W", command=self.open_file_window)
 
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Open", accelerator="Ctrl+O", command=self.open_file)
@@ -194,43 +194,84 @@ class TKedit:
         self.file_menu.add_command(label="Snippets", accelerator="Alt+Z", command=self.open_snippet_window)
 
         self.file_menu.add_separator()
-        self.file_menu.add_command(label="About", command=self.about)
-        self.file_menu.add_command(label="Special Keys", command=self.hotkeys)
-        self.file_menu.add_command(label="Documentation", command=self.display_help)
+        self.file_menu.add_command(label="About", accelerator="Ctrl+1", command=self.about)
+        self.file_menu.add_command(label="Special Keys", accelerator="Ctrl+2", command=self.hotkeys)
+        self.file_menu.add_command(label="Documentation", accelerator="Ctrl+3", command=self.display_help)
         self.menu_bar.add_cascade(label="Other", menu=self.file_menu)
 
         self.master.config(menu=self.menu_bar)
 
-        # Bind keyboard shortcuts
-        self.text_area.bind('<Control-a>', self.select_all)
-        self.text_area.bind('<Control-n>', self.new_file)
-        self.text_area.bind("<Control-o>", self.open_file)
-        self.text_area.bind("<Shift-Control-O>", self.open_file_recent)
-        self.text_area.bind("<Shift-Control-W>", self.open_file_window)
-        self.text_area.bind("<Shift-Control-S>", self.save_file_as)
-        self.text_area.bind("<Control-s>", self.save_file)
-        self.text_area.bind("<Control-v>", self.paste)
-        root.bind("<Control-q>", self.close_file)
-        self.text_area.bind("<Control-f>", self.find_text)
-        self.text_area.bind("<F3>", self.find_next)
-        self.text_area.bind("<Control-h>", self.find_replace)
-        self.text_area.bind("<Control-w>", self.toggle_wordwrap)
-        self.text_area.bind("<Control-u>", self.convert_to_uppercase)
-        self.text_area.bind("<Control-l>", self.convert_to_lowercase)
-        self.text_area.bind("<Shift-Control-T>", self.open_terminal)
-        self.text_area.bind("<Shift-Control-F>", self.open_file_manager)
-        self.text_area.bind("<Tab>", self.on_tab)
-        self.text_area.bind("<Shift-Tab>", self.on_shift_tab)
-        self.text_area.bind("<Shift-ISO_Left_Tab>", self.on_shift_tab)
-        self.text_area.bind("<Button-3>", self.show_popup)  # right-click to show popup
-        self.text_area.bind("<Double-Button-1>", self.select_token)
-        self.text_area.bind("<Control-slash>", self.toggle_line_comments)
-        self.text_area.bind("<Control-Button-1>", self.toggle_bookmark)
-        self.text_area.bind("<Control-b>", self.next_bookmark)
-        self.text_area.bind("<Control-Shift-B>", self.clear_bookmarks)
-        self.text_area.bind("<Control-p>", self.load_previous)
-        self.text_area.bind("<Alt-z>", self.open_snippet_window)
-        self.text_area.bind("<Shift-Control-Z>", self.open_snippet_window)  # for Mac
+
+
+        # Bind keyboard shortcuts everything except MacOS
+        if platform.system() != "Darwin":
+            self.text_area.bind('<Control-KeyPress-1>', self.about)
+            self.text_area.bind('<Control-KeyPress-2>', self.hotkeys)
+            self.text_area.bind('<Control-KeyPress-3>', self.display_help)
+            self.text_area.bind('<Control-a>', self.select_all)
+            self.text_area.bind('<Control-n>', self.new_file)
+            self.text_area.bind("<Control-o>", self.open_file)
+            self.text_area.bind("<Shift-Control-O>", self.open_file_recent)
+            self.text_area.bind("<Shift-Control-W>", self.open_file_window)
+            self.text_area.bind("<Shift-Control-S>", self.save_file_as)
+            self.text_area.bind("<Control-s>", self.save_file)
+            self.text_area.bind("<Control-v>", self.paste)
+            root.bind("<Control-q>", self.close_file)
+            self.text_area.bind("<Control-f>", self.find_text)
+            self.text_area.bind("<F3>", self.find_next)
+            self.text_area.bind("<Control-h>", self.find_replace)
+            self.text_area.bind("<Control-w>", self.toggle_wordwrap)
+            self.text_area.bind("<Control-u>", self.convert_to_uppercase)
+            self.text_area.bind("<Control-l>", self.convert_to_lowercase)
+            self.text_area.bind("<Shift-Control-T>", self.open_terminal)
+            self.text_area.bind("<Shift-Control-F>", self.open_file_manager)
+            self.text_area.bind("<Tab>", self.on_tab)
+            self.text_area.bind("<Shift-Tab>", self.on_shift_tab)
+            self.text_area.bind("<Shift-ISO_Left_Tab>", self.on_shift_tab)
+            self.text_area.bind("<Button-3>", self.show_popup)  # right-click to show popup
+            self.text_area.bind("<Double-Button-1>", self.select_token)
+            self.text_area.bind("<Control-slash>", self.toggle_line_comments)
+            self.text_area.bind("<Control-Button-1>", self.toggle_bookmark)
+            self.text_area.bind("<Control-b>", self.next_bookmark)
+            self.text_area.bind("<Control-Shift-B>", self.clear_bookmarks)
+            self.text_area.bind("<Control-p>", self.load_previous)
+            self.text_area.bind("<Alt-z>", self.open_snippet_window)
+            self.text_area.bind("<Shift-Control-Z>", self.open_snippet_window)  # for Mac
+        else:
+        # Bind keyboard shortcuts for MacOS
+            self.text_area.bind('<Command-KeyPress-1>', self.about)
+            self.text_area.bind('<Command-KeyPress-2>', self.hotkeys)
+            self.text_area.bind('<Command-KeyPress-3>', self.display_help)
+            self.text_area.bind('<Command-a>', self.select_all)
+            self.text_area.bind('<Command-n>', self.new_file)
+            self.text_area.bind("<Command-o>", self.open_file)
+            self.text_area.bind("<Shift-Command-O>", self.open_file_recent)
+            self.text_area.bind("<Shift-Command-W>", self.open_file_window)
+            self.text_area.bind("<Shift-Command-S>", self.save_file_as)
+            self.text_area.bind("<Command-s>", self.save_file)
+            self.text_area.bind("<Command-v>", self.paste)
+            root.bind("<Command-q>", self.close_file)
+            self.text_area.bind("<Command-f>", self.find_text)
+            self.text_area.bind("<F3>", self.find_next)
+            self.text_area.bind("<Command-h>", self.find_replace)
+            self.text_area.bind("<Command-w>", self.toggle_wordwrap)
+            self.text_area.bind("<Command-u>", self.convert_to_uppercase)
+            self.text_area.bind("<Command-l>", self.convert_to_lowercase)
+            self.text_area.bind("<Shift-Command-T>", self.open_terminal)
+            self.text_area.bind("<Shift-Command-F>", self.open_file_manager)
+            self.text_area.bind("<Tab>", self.on_tab)
+            self.text_area.bind("<Shift-Tab>", self.on_shift_tab)
+            self.text_area.bind("<Shift-ISO_Left_Tab>", self.on_shift_tab)
+            self.text_area.bind("<Button-3>", self.show_popup)  # right-click to show popup
+            self.text_area.bind("<Double-Button-1>", self.select_token)
+            self.text_area.bind("<Command-slash>", self.toggle_line_comments)
+            self.text_area.bind("<Command-Button-1>", self.toggle_bookmark)
+            self.text_area.bind("<Command-b>", self.next_bookmark)
+            self.text_area.bind("<Command-Shift-B>", self.clear_bookmarks)
+            self.text_area.bind("<Command-p>", self.load_previous)
+            self.text_area.bind("<Alt-z>", self.open_snippet_window)
+            self.text_area.bind("<Shift-Command-Z>", self.open_snippet_window)  # for Mac
+
 
         if self.autoindent.lower() == 'yes':
             self.text_area.bind("<Return>", self.on_return)
@@ -264,7 +305,9 @@ class TKedit:
 
 
         if self.theme in ["darkly","cyborg","superhero","solar"]:
-            self.style.configure('TButton', background=self.style.colors.dark, foreground=self.style.colors.light)
+            self.style.configure('TButton', background=self.style.colors.dark,
+                                            foreground=self.style.colors.light,
+                                            bootstyle="success-outline")
         else:
             self.style.configure('TButton', background=self.style.colors.light, foreground=self.style.colors.dark)
 
@@ -695,10 +738,21 @@ class TKedit:
         return str(p.with_suffix('.html'))
 
 
+    def prompt_save_changes(self) -> bool:
+        res = Messagebox.yesno(
+            f"Do you want to save changes to {self.filename} first?",
+            "Save File First?"
+        )
+        if res == "No":
+            return False
+        else:
+            return True
+
+
     def new_file(self, event=None):
         ''' Creating a new file. Prompt to save an opened file. '''
-        if self.is_dirty:
-            if Messagebox.show_question("Do you want to save changes to " + str(self.filename) + " before creating a new file?","New File"):
+        if self.filename and self.is_dirty:
+            if self.prompt_save_changes():
                 self.save_file()
         self.filename = None
         self.text_area.delete("1.0", END)
@@ -713,7 +767,7 @@ class TKedit:
     def open_file(self, event=None):
         ''' Open an existing file. Prompt to save opened file. '''
         if self.filename and self.is_dirty:
-            if Messagebox.show_question("Do you want to save changes to " + str(self.filename) + " before Opening New File?", "Open File"):
+            if self.prompt_save_changes():
                 self.save_file()
 
         current_dir = os.path.dirname(self.filename) if self.filename else "."
@@ -745,9 +799,7 @@ class TKedit:
         ''' Open an existing file in a new tkedit instance. '''
         if not self.dropfile:
             if self.filename and self.is_dirty:
-                if Messagebox.show_question("Do you want to save changes to " + str(self.filename) \
-                                            + " before Opening New File?",
-                                            "Open File"):
+                if self.prompt_save_changes():
                     self.save_file()
 
             current_dir = os.path.dirname(self.filename) if self.filename else "."
@@ -845,7 +897,7 @@ class TKedit:
     def open_file_recent(self, event=None):
         '''Creates the Toplevel UI window to select a recent file.'''
         if self.filename and self.is_dirty:
-            if Messagebox.show_question("Do you want to save changes to " + str(self.filename) + " before Opening New File?", "Open File"):
+            if self.prompt_save_changes():
                 self.save_file()
 
         recent_list = self.rf_manager.files
@@ -990,6 +1042,7 @@ class TKedit:
             title="Find Text",
             initialvalue=look  # Optional: sets default text in the field
         )
+
         if term:
             self.search_term = term
             # Remove any previous highlights.
@@ -1049,7 +1102,7 @@ class TKedit:
             with open(lastpath, "w", encoding="utf-8") as fout:
                 fout.write(self.filename)
         if self.is_dirty:
-            if Messagebox.show_question("Do you want to save changes to " + str(self.filename) + " before closing?", "Close File"):
+            if self.prompt_save_changes():
                 self.save_file()
         self.rf_manager.save_to_disk()
         with open(winpath, "w", encoding="utf-8") as fout:
@@ -1333,7 +1386,8 @@ favorite themes:
 
     def hotkeys(self, event=None):
         ''' Messagebox with hotkey assignments '''
-        msg = '''
+        if platform.system() != "Darwin":
+            msg = '''
 SPECIAL KEYS    DESCRIPTION
 
 Control-o ... Open File
@@ -1356,6 +1410,31 @@ Control-Shift-F ... Open File Manager
 Control-Slash ... Toggle Line Comment
 Alt-z ... snippets
 Shift-Control-Z ... snippets (for Mac)
+'''
+        else:
+            msg = '''
+SPECIAL KEYS    DESCRIPTION
+
+Command-o ... Open File
+Command-n ... New File
+Command-p ... Open Previous File
+Command-Shift-O ... Open Recent File List
+Command-Shift-W ... Open File New Window
+Command-Shift-S ... Save-As File
+Command-s ... Save File
+Command-q ... Close App
+Command-u ... uppercase
+Command-l ... lowercase
+Command-f ... Find Text
+F3 ... Find Next
+Command-h ... Find - Replace Text
+Command-w ... Toggle Word wrap
+Command-a ... Select All
+Command-Shift-T ... Open Terminal
+Command-Shift-F ... Open File Manager
+Command-Slash ... Toggle Line Comment
+Alt-z ... snippets
+Shift-Command-Z ... snippets (for Mac)
 '''
         Messagebox.show_info(msg, "Key Commands")
 
@@ -1721,11 +1800,11 @@ class SnippetWindow(Toplevel):
             return
 
         if path.exists():
-            overwrite = Messagebox.askyesno(
+            overwrite = Messagebox.yesno(
                 f"Snippet '{fname}' already exists.\nOverwrite it?",
                 "Overwrite Snippet"
             )
-            if not overwrite:
+            if overwrite == "No":
                 return
 
         try:
@@ -1767,6 +1846,7 @@ class SnippetWindow(Toplevel):
             Messagebox.show_error("Some files could not be deleted:\n\n" + "\n".join(errors), "Delete Snippet")
 
     def close_window(self):
+        '''  Destroys the Snippets Toplevel window '''
         self.destroy()
 
 # ------------------#
@@ -1785,7 +1865,7 @@ root.geometry("500x400")
 # opening new windows successively will offset top metric
 if os.path.isfile(winpath):
     with open(winpath, "r", encoding="utf-8") as f:
-        lcoor = f.read()
+        lcoor = f.read().strip()
     text = lcoor  # now increment the "top" value by 28 pixels to slightly push down a new window
     x = text.rfind('+') + 1
     top = int(text[x:]) + 28  # pushes down "top" so previous window is still exposed
@@ -1794,7 +1874,7 @@ if os.path.isfile(winpath):
         fout.write(text)
     root.geometry(lcoor.strip())  # 1171x1296+3268+15  WxH+left+top
 else:
-    root.geometry("700x500") # WxH+left+top
+    root.geometry("800x500") # WxH+left+top
 
 root.protocol("WM_DELETE_WINDOW", save_location)  # Absolute Exit - does not check is_dirty
 

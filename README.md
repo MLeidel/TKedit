@@ -127,23 +127,10 @@ see _win_tkedit.ini_ and _Mac_tkedit.ini_ for examples
 | **Shift-Control-Z**| Snippets Manager for Mac |
 | **Control-Slash**| Line Comment |
 
-and others ...
+and other common editing keyboard commands...  
+(_Watch out for caps-lock when using keyboard commands_ :)  
+For Mac's replace "_Control_" with "_Command_" above.
 
-        ctl-End
-        ctl-Home
-        ctl ->
-        ctl <-
-        ctl-k
-        ctl-a
-        shft-End
-        shft-Home
-        shft-ctl ->
-        shft-ctl <-
-        shft ->
-        shft <-
-        shft up-arrow/down-arrow
-        shft-ctl up-arrow/down-arrow
-        
 ## Bookmarks
 
 |Keyboard    | Description |
@@ -178,6 +165,7 @@ and others ...
 
 > ![alttext](images/TKrm1.png "title")
 
+Theme: darkly zenburn
 
 ---
 

@@ -17,6 +17,7 @@ echo "setting up config ..."
 
 mkdir "/home/$USER/.config/tkedit"
 cp -v tkedit.ini "/home/$USER/.config/tkedit"
+cp -v images/tkedit256.png "/home/$USER/.config/tkedit"
 cp -v images/tked1.png "/home/$USER/.config/tkedit"
 
 ./cmpy tkedit.py

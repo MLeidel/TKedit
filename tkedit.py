@@ -1047,8 +1047,7 @@ class TKedit:
             self.search_term = term
             # Remove any previous highlights.
             self.text_area.tag_remove("highlight", "1.0", END)
-            # Start searching from the beginning.
-            self.last_found_index = "1.0"
+            self.last_found_index = self.text_area.index("insert")  # start searching at current position
             pos = self.text_area.search(self.search_term, self.last_found_index, stopindex=END)
             if pos:
                 # highlight the found text.
@@ -1083,7 +1082,8 @@ class TKedit:
             self.last_found_index = end_pos
             self.text_area.tag_add("highlight", pos, end_pos)
         else:
-            Messagebox.show_info("No more matches found.", "Result")
+            # Messagebox.show_info("No more matches found.", "Result")
+            self.last_found_index = "1.0"  # back to "top" and start over
             self.text_area.tag_remove("highlight", "1.0", END)
         return "break"  # Prevent the default behavior.
 
@@ -1153,6 +1153,7 @@ class TKedit:
             self.text_area.tag_remove("highlight", "1.0", END)
 
             # Initialize search position if not set or invalid
+            # start at current insertion point
             search_pos = getattr(self, 'last_found_index', "1.0")
             if not search_pos or search_pos == "0":
                 search_pos = "1.0"

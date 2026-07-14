@@ -1,9 +1,9 @@
-#!/opt/homebrew/bin/python3
+#!/usr/bin/python3
 
+# MacOS - #!/opt/homebrew/bin/python3
 # tkedit.py
 # M Leidel 7/2026
 #     use "which python3" to find path to python3
-#     MacOS - #!/opt/homebrew/bin/python3
 
 
 import os
@@ -31,8 +31,10 @@ from tklinenums import TkLineNumbers
 import markdown
 from Tksyntex import SyntaxHighlighter
 
+version="1.5"  # set this to keep distributions updated
+
 # selection parameters
-word_re = re.compile(r"[^()\[\],\.\-\s=\"\';:\/]+")
+word_re = re.compile(r"[^()\[\],\.\-\s=\"\';:\/><]+")
 
 # language identification
 lx = [".txt",".py",".js",".c",".java",".html",".css",".go",".rs",".sh",".json",".sql",".md",".ini", ".h", ".cpp"]
@@ -230,6 +232,7 @@ class TKedit:
             self.text_area.bind("<Shift-ISO_Left_Tab>", self.on_shift_tab)
             self.text_area.bind("<Button-3>", self.show_popup)  # right-click to show popup
             self.text_area.bind("<Double-Button-1>", self.select_token)
+            self.text_area.bind("<Triple-Button-1>", self.select_line)
             self.text_area.bind("<Control-slash>", self.toggle_line_comments)
             self.text_area.bind("<Control-Button-1>", self.toggle_bookmark)
             self.text_area.bind("<Control-b>", self.next_bookmark)
@@ -264,12 +267,12 @@ class TKedit:
             self.text_area.bind("<Shift-ISO_Left_Tab>", self.on_shift_tab)
             self.text_area.bind("<Button-3>", self.show_popup)  # right-click to show popup
             self.text_area.bind("<Double-Button-1>", self.select_token)
+            self.text_area.bind("<Triple-Button-1>", self.select_line)
             self.text_area.bind("<Command-slash>", self.toggle_line_comments)
             self.text_area.bind("<Command-Button-1>", self.toggle_bookmark)
             self.text_area.bind("<Command-b>", self.next_bookmark)
             self.text_area.bind("<Command-Shift-B>", self.clear_bookmarks)
             self.text_area.bind("<Command-p>", self.load_previous)
-            self.text_area.bind("<Alt-z>", self.open_snippet_window)
             self.text_area.bind("<Shift-Command-Z>", self.open_snippet_window)  # for Mac
 
 
@@ -1354,9 +1357,29 @@ class TKedit:
         return "break"   # stop default handler
 
 
+    def select_line(self, event=None):
+        """Select the entire line the cursor is on when triple-clicked."""
+        # Get the index of the current line start and end
+        line_start = self.text_area.index("insert linestart")
+        line_end   = self.text_area.index("insert lineend")
+
+        # Remove any existing selection
+        self.text_area.tag_remove("sel", "1.0", "end")
+
+        # Apply selection tag to the entire line
+        self.text_area.tag_add("sel", line_start, line_end)
+
+        # Move the insert cursor to the start of the line
+        self.text_area.mark_set("insert", line_start)
+
+        # Stop the default triple-click behavior
+        return "break"
+
+
+
     def about(self, event=None):
         ''' Display Messagebox with settings info and author info '''
-        msg = f''' CURRENT CONFIG
+        msg = f''' TKedit  v{version}
 font: {self.fontname}
 font size: {self.fontsize}
 theme: {self.theme}
@@ -1428,13 +1451,13 @@ Command-u ... uppercase
 Command-l ... lowercase
 Command-f ... Find Text
 F3 ... Find Next
+Command-Shift-F ... Find Next
 Command-h ... Find - Replace Text
 Command-w ... Toggle Word wrap
 Command-a ... Select All
 Command-Shift-T ... Open Terminal
 Command-Shift-F ... Open File Manager
 Command-Slash ... Toggle Line Comment
-Alt-z ... snippets
 Shift-Command-Z ... snippets (for Mac)
 '''
         Messagebox.show_info(msg, "Key Commands")

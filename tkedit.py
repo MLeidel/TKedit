@@ -322,7 +322,7 @@ class TKedit:
 
         # open file from command line
         if len(sys.argv) > 1:
-            self.filename = sys.argv[1]
+            self.filename = str(Path(sys.argv[1]).resolve())
             self.filepriv = self.filename
             self.load_file()
         elif self.open_last.lower() == "yes":
@@ -672,6 +672,7 @@ class TKedit:
         else:
             self.highlighter.set_language("text")
         try:
+            print(self.filename)
             with open(self.filename, "r", encoding="utf-8") as file:
                 content = file.read()
                 self.text_area.delete("1.0", END)

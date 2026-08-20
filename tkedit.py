@@ -1,9 +1,9 @@
-#!/usr/bin/python3
 
-# MacOS - #!/opt/homebrew/bin/python3
-# Source Code for tkedit.py
-# M Leidel 7/2062
+# tkedit.py
+# M Leidel 7/2026
 #     use "which python3" to find path to python3
+#     MacOS - #!/opt/homebrew/bin/python3
+
 
 import os
 import sys
@@ -30,10 +30,8 @@ from tklinenums import TkLineNumbers
 import markdown
 from Tksyntex import SyntaxHighlighter
 
-version="1.5"  # set this to keep distributions updated
-
 # selection parameters
-word_re = re.compile(r"[^()\[\],\.\-\s=\"\';:\/><]+")
+word_re = re.compile(r"[^()\[\],\.\-\s=\"\';:]+")
 
 # language identification
 lx = [".txt",".py",".js",".c",".java",".html",".css",".go",".rs",".sh",".json",".sql",".md",".ini", ".h", ".cpp", ".ps1"]
@@ -48,7 +46,7 @@ if platform.system() == "Windows":
     inipath  = Path("C:\\", "TKedit", "tkedit.ini")
     lastpath = Path("C:\\", "TKedit", "lastfile")
     winpath  = Path("C:\\", "TKedit", "winfo")
-    appicon  = Path("C:\\", "TKedit", "tked1.png")
+    appicon  = Path("C:\\", "TKedit", "tkedit256.png")
     recents  = Path("C:\\", "TKedit", "recent_files.json")
     snipdir  = Path("C:\\", "TKedit", "snippets")
 elif platform.system() == "Darwin":
@@ -56,7 +54,7 @@ elif platform.system() == "Darwin":
     inipath = Path("/Users",user,".config","tkedit","tkedit.ini")
     lastpath = Path("/Users",user,".config","tkedit","lastfile")
     winpath = Path("/Users",user,".config","tkedit","winfo")
-    appicon = Path("/Users",user,".config","tkedit","tked1.png")
+    appicon = Path("/Users",user,".config","tkedit","tkedit256.png")
     recents = Path("/Users",user,".config","tkedit","recent_files.json")
     snipdir = Path("/Users",user,".config","tkedit","snippets")
 else:
@@ -65,7 +63,7 @@ else:
     inipath = Path("/home",user,".config","tkedit","tkedit.ini")
     lastpath = Path("/home",user,".config","tkedit","lastfile")
     winpath = Path("/home",user,".config","tkedit","winfo")
-    appicon = Path("/home",user,".config","tkedit","tked1.png")
+    appicon = Path("/home",user,".config","tkedit","tkedit256.png")
     recents = Path("/home",user,".config","tkedit","recent_files.json")
     snipdir = Path("/home",user,".config","tkedit","snippets")
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -138,7 +136,7 @@ class TKedit:
         vbar.config(command=self.text_area.yview)
 
         # determine colors for TkLineNumbers, based on ttkbootstrap themes
-        bg="#ffffff"  # default is for Light Themes
+        bg="#eee"  # default is for Light Themes
         if self.theme == "darkly": bg="#222222"
         if self.theme == "cyborg": bg="#060606"
         if self.theme == "superhero": bg="#2b3e50"
@@ -168,7 +166,7 @@ class TKedit:
 
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Open", accelerator="Ctrl+O", command=self.open_file)
-        self.file_menu.add_command(label="Open Recents", accelerator="Ctrl-R", command=self.open_file_recent)
+        self.file_menu.add_command(label="Open Recents", accelerator="Ctrl-Shift+O", command=self.open_file_recent)
         self.file_menu.add_command(label="Open Prior", accelerator="Ctrl-P", command=self.load_previous)
 
         self.file_menu.add_separator()
@@ -187,15 +185,12 @@ class TKedit:
         self.file_menu.add_command(label="Find", accelerator="Ctrl+F", command=self.find_text)
         self.file_menu.add_command(label="Next", accelerator="F3", command=self.find_next)
         self.file_menu.add_command(label="Replace", accelerator="Ctrl+H", command=self.find_replace)
-        self.file_menu.add_command(label="Functions", accelerator="Ctrl+G", command=self.find_functions)
-        self.file_menu.add_command(label="Goto Line Nbr", accelerator="Shift+Ctrl+L", command=self.line_number_request)
+        self.file_menu.add_command(label="Toggle Word Wrap", accelerator="Ctrl+W", command=self.toggle_wordwrap)
 
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Terminal", accelerator="Ctrl+Shift+T", command=self.open_terminal)
         self.file_menu.add_command(label="File Manager", accelerator="Ctrl+Shift+F", command=self.open_file_manager)
         self.file_menu.add_command(label="Snippets", accelerator="Alt+Z", command=self.open_snippet_window)
-        self.file_menu.add_command(label="Toggle Word Wrap", accelerator="Ctrl+W", command=self.toggle_wordwrap)
-
 
         self.file_menu.add_separator()
         self.file_menu.add_command(label="About", accelerator="Ctrl+1", command=self.about)
@@ -208,76 +203,71 @@ class TKedit:
 
         # Bind keyboard shortcuts everything except MacOS
         if platform.system() != "Darwin":
-            root.bind('<Control-KeyPress-1>', self.about)
-            root.bind('<Control-KeyPress-2>', self.hotkeys)
-            root.bind('<Control-KeyPress-3>', self.display_help)
-            root.bind('<Control-a>', self.select_all)
-            root.bind('<Control-n>', self.new_file)
-            root.bind("<Control-o>", self.open_file)
-            root.bind("<Control-r>", self.open_file_recent)
-            root.bind("<Shift-Control-W>", self.open_file_window)
-            root.bind("<Shift-Control-S>", self.save_file_as)
-            root.bind("<Control-s>", self.save_file)
+            self.text_area.bind('<Control-KeyPress-1>', self.about)
+            self.text_area.bind('<Control-KeyPress-2>', self.hotkeys)
+            self.text_area.bind('<Control-KeyPress-3>', self.display_help)
+            self.text_area.bind('<Control-a>', self.select_all)
+            self.text_area.bind('<Control-n>', self.new_file)
+            self.text_area.bind("<Control-o>", self.open_file)
+            self.text_area.bind("<Shift-Control-O>", self.open_file_recent)
+            self.text_area.bind("<Shift-Control-W>", self.open_file_window)
+            self.text_area.bind("<Shift-Control-S>", self.save_file_as)
+            self.text_area.bind("<Control-s>", self.save_file)
             self.text_area.bind("<Control-v>", self.paste)
             root.bind("<Control-q>", self.close_file)
             self.text_area.bind("<Control-f>", self.find_text)
             self.text_area.bind("<F3>", self.find_next)
             self.text_area.bind("<Control-h>", self.find_replace)
-            root.bind("<Control-g>", self.find_functions)
             self.text_area.bind("<Control-w>", self.toggle_wordwrap)
             self.text_area.bind("<Control-u>", self.convert_to_uppercase)
             self.text_area.bind("<Control-l>", self.convert_to_lowercase)
-            self.text_area.bind("<Shift-Control-L>", self.line_number_request)
-            root.bind("<Shift-Control-T>", self.open_terminal)
-            root.bind("<Shift-Control-F>", self.open_file_manager)
+            self.text_area.bind("<Shift-Control-T>", self.open_terminal)
+            self.text_area.bind("<Shift-Control-F>", self.open_file_manager)
             self.text_area.bind("<Tab>", self.on_tab)
             self.text_area.bind("<Shift-Tab>", self.on_shift_tab)
             self.text_area.bind("<Shift-ISO_Left_Tab>", self.on_shift_tab)
-            root.bind("<Button-3>", self.show_popup)  # right-click to show popup
+            self.text_area.bind("<Button-3>", self.show_popup)  # right-click to show popup
             self.text_area.bind("<Double-Button-1>", self.select_token)
-            self.text_area.bind("<Triple-Button-1>", self.select_line)
             self.text_area.bind("<Control-slash>", self.toggle_line_comments)
             self.text_area.bind("<Control-Button-1>", self.toggle_bookmark)
             self.text_area.bind("<Control-b>", self.next_bookmark)
             self.text_area.bind("<Control-Shift-B>", self.clear_bookmarks)
-            root.bind("<Control-p>", self.load_previous)
+            self.text_area.bind("<Control-p>", self.load_previous)
             self.text_area.bind("<Alt-z>", self.open_snippet_window)
             self.text_area.bind("<Shift-Control-Z>", self.open_snippet_window)  # for Mac
         else:
         # Bind keyboard shortcuts for MacOS
-            root.bind('<Command-KeyPress-1>', self.about)
-            root.bind('<Command-KeyPress-2>', self.hotkeys)
-            root.bind('<Command-KeyPress-3>', self.display_help)
-            root.bind('<Command-a>', self.select_all)
-            root.bind('<Command-n>', self.new_file)
-            root.bind("<Command-o>", self.open_file)
-            root.bind("<Command-r>", self.open_file_recent)
-            root.bind("<Shift-Command-W>", self.open_file_window)
-            root.bind("<Shift-Command-S>", self.save_file_as)
-            root.bind("<Command-s>", self.save_file)
-            root.bind("<Command-v>", self.paste)
+            self.text_area.bind('<Command-KeyPress-1>', self.about)
+            self.text_area.bind('<Command-KeyPress-2>', self.hotkeys)
+            self.text_area.bind('<Command-KeyPress-3>', self.display_help)
+            self.text_area.bind('<Command-a>', self.select_all)
+            self.text_area.bind('<Command-n>', self.new_file)
+            self.text_area.bind("<Command-o>", self.open_file)
+            self.text_area.bind("<Shift-Command-O>", self.open_file_recent)
+            self.text_area.bind("<Shift-Command-W>", self.open_file_window)
+            self.text_area.bind("<Shift-Command-S>", self.save_file_as)
+            self.text_area.bind("<Command-s>", self.save_file)
+            self.text_area.bind("<Command-v>", self.paste)
             root.bind("<Command-q>", self.close_file)
             self.text_area.bind("<Command-f>", self.find_text)
             self.text_area.bind("<F3>", self.find_next)
             self.text_area.bind("<Command-h>", self.find_replace)
-            root.bind("<Command-g>", self.find_functions)
             self.text_area.bind("<Command-w>", self.toggle_wordwrap)
             self.text_area.bind("<Command-u>", self.convert_to_uppercase)
             self.text_area.bind("<Command-l>", self.convert_to_lowercase)
-            self.text_area.bind("<Shift-Command-L>", self.line_number_request)
-            root.bind("<Shift-Command-T>", self.open_terminal)
-            root.bind("<Shift-Command-F>", self.open_file_manager)
+            self.text_area.bind("<Shift-Command-T>", self.open_terminal)
+            self.text_area.bind("<Shift-Command-F>", self.open_file_manager)
             self.text_area.bind("<Tab>", self.on_tab)
             self.text_area.bind("<Shift-Tab>", self.on_shift_tab)
             self.text_area.bind("<Shift-ISO_Left_Tab>", self.on_shift_tab)
-            root.bind("<Button-3>", self.show_popup)  # right-click to show popup
+            self.text_area.bind("<Button-3>", self.show_popup)  # right-click to show popup
             self.text_area.bind("<Double-Button-1>", self.select_token)
-            self.text_area.bind("<Triple-Button-1>", self.select_line)
             self.text_area.bind("<Command-slash>", self.toggle_line_comments)
             self.text_area.bind("<Command-Button-1>", self.toggle_bookmark)
             self.text_area.bind("<Command-b>", self.next_bookmark)
-            root.bind("<Command-Shift-B>", self.clear_bookmarks)
-            root.bind("<Command-p>", self.load_previous)
+            self.text_area.bind("<Command-Shift-B>", self.clear_bookmarks)
+            self.text_area.bind("<Command-p>", self.load_previous)
+            self.text_area.bind("<Alt-z>", self.open_snippet_window)
             self.text_area.bind("<Shift-Command-Z>", self.open_snippet_window)  # for Mac
 
 
@@ -311,18 +301,17 @@ class TKedit:
 
         self.style = Style(theme=self.theme)  # set the ttkbootstrap theme
 
-
         if self.theme in ["darkly","cyborg","superhero","solar"]:
             self.style.configure('TButton', background=self.style.colors.dark,
                                             foreground=self.style.colors.light,
                                             bootstyle="success-outline")
         else:
             self.style.configure('TButton', background=self.style.colors.light, foreground=self.style.colors.dark)
-
+            self.text_area.configure(background="#eee")
 
         # open file from command line
         if len(sys.argv) > 1:
-            self.filename = str(Path(sys.argv[1]).resolve())
+            self.filename = sys.argv[1]
             self.filepriv = self.filename
             self.load_file()
         elif self.open_last.lower() == "yes":
@@ -439,14 +428,16 @@ class TKedit:
     def toggle_line_comments(self, event=None):
         '''
         Toggle line comments in a Tkinter Text widget.
+
+        Behavior:
         - If there is a selection, operate on all touched lines.
         - Otherwise operate on the current line.
         - For multi-line comment:
             insert comment marker at the minimum indentation shared by non-blank lines.
         - For uncomment:
             remove the marker if present at that same indentation position.
-        - Uses '# ' for Python/shell-like files, otherwise '// '. '''
-
+        - Uses '# ' for Python/shell-like files, otherwise '// '.
+        '''
         text = self.text_area
         filename = self.filename
 
@@ -672,7 +663,6 @@ class TKedit:
         else:
             self.highlighter.set_language("text")
         try:
-            print(self.filename)
             with open(self.filename, "r", encoding="utf-8") as file:
                 content = file.read()
                 self.text_area.delete("1.0", END)
@@ -917,14 +907,14 @@ class TKedit:
         popup = Toplevel(self)
         popup.title("Open Recent File")
         popup.geometry("450x400")
-        popup.resizable(True, False)
+        popup.resizable(False, False)
         popup.attributes("-topmost", True)
 
         # Ensure focus goes to the popup
         popup.grab_set()
 
         # Label instruction
-        lbl = Label(popup, text="Select a file to open:", font=("Sans", 11, "bold"))
+        lbl = Label(popup, text="Select a file to open:", font=("Helvetica", 10, "bold"))
         lbl = Label(popup, text="Select a file to open:")
         lbl.pack(anchor=W, padx=15, pady=(15, 5))
 
@@ -939,7 +929,7 @@ class TKedit:
         listbox = Listbox(
             list_frame,
             yscrollcommand=scrollbar.set,
-            font=("Sans", 11),
+            font=("Sans", 10),
             # bg="#2b2b2b", # Matching the 'darkly' theme background style
             # fg="#ffffff",
             # selectbackground="#00bc8c", # Accent color
@@ -977,8 +967,6 @@ class TKedit:
 
         open_btn = Button(btn_frame, text="Open File", command=open_selected)
         open_btn.pack(side=RIGHT, padx=5)
-
-        return "break"
 
 
     def backup_name_for(self, path, date=None, prefix="bkup_"):
@@ -1056,7 +1044,8 @@ class TKedit:
             self.search_term = term
             # Remove any previous highlights.
             self.text_area.tag_remove("highlight", "1.0", END)
-            self.last_found_index = self.text_area.index("insert")  # start searching at current position
+            # Start searching from the beginning.
+            self.last_found_index = "1.0"
             pos = self.text_area.search(self.search_term, self.last_found_index, stopindex=END)
             if pos:
                 # highlight the found text.
@@ -1091,8 +1080,7 @@ class TKedit:
             self.last_found_index = end_pos
             self.text_area.tag_add("highlight", pos, end_pos)
         else:
-            # Messagebox.show_info("No more matches found.", "Result")
-            self.last_found_index = "1.0"  # back to "top" and start over
+            Messagebox.show_info("No more matches found.", "Result")
             self.text_area.tag_remove("highlight", "1.0", END)
         return "break"  # Prevent the default behavior.
 
@@ -1162,7 +1150,6 @@ class TKedit:
             self.text_area.tag_remove("highlight", "1.0", END)
 
             # Initialize search position if not set or invalid
-            # start at current insertion point
             search_pos = getattr(self, 'last_found_index', "1.0")
             if not search_pos or search_pos == "0":
                 search_pos = "1.0"
@@ -1277,25 +1264,6 @@ class TKedit:
         return "break"
 
 
-    def go_to_line(self, line_no_1_based):
-        ''' Used for "line_number_request" and "find_functions" '''
-        text_widget = self.text_area
-        line = int(line_no_1_based)
-        index = f"{line}.0"     # column 0 of that line (1-based line index)
-        text_widget.mark_set("insert", index)
-        text_widget.see(index)
-
-    def line_number_request(self, e=None):
-        ''' User want's to jump to a specific line number '''
-        ln = Querybox.get_string(
-            prompt="Enter Line No:",
-            title="Go To Line No"
-        )
-        if ln:
-            self.go_to_line(ln)
-        return "break"
-
-
     def has_selection(self, text_widget) -> bool:
         # "sel" is the selection tag in Tk Text widgets
         ranges = text_widget.tag_ranges("sel")
@@ -1382,29 +1350,9 @@ class TKedit:
         return "break"   # stop default handler
 
 
-    def select_line(self, event=None):
-        """Select the entire line the cursor is on when triple-clicked."""
-        # Get the index of the current line start and end
-        line_start = self.text_area.index("insert linestart")
-        line_end   = self.text_area.index("insert lineend")
-
-        # Remove any existing selection
-        self.text_area.tag_remove("sel", "1.0", "end")
-
-        # Apply selection tag to the entire line
-        self.text_area.tag_add("sel", line_start, line_end)
-
-        # Move the insert cursor to the start of the line
-        self.text_area.mark_set("insert", line_start)
-
-        # Stop the default triple-click behavior
-        return "break"
-
-
-
     def about(self, event=None):
         ''' Display Messagebox with settings info and author info '''
-        msg = f''' TKedit  v{version}
+        msg = f''' CURRENT CONFIG
 font: {self.fontname}
 font size: {self.fontsize}
 theme: {self.theme}
@@ -1456,7 +1404,6 @@ Control-w ... Toggle Word wrap
 Control-a ... Select All
 Control-Shift-T ... Open Terminal
 Control-Shift-F ... Open File Manager
-Control-Shift-L ... Go To Line Nbr
 Control-Slash ... Toggle Line Comment
 Alt-z ... snippets
 Shift-Control-Z ... snippets (for Mac)
@@ -1477,14 +1424,13 @@ Command-u ... uppercase
 Command-l ... lowercase
 Command-f ... Find Text
 F3 ... Find Next
-Command-Shift-F ... Find Next
 Command-h ... Find - Replace Text
 Command-w ... Toggle Word wrap
 Command-a ... Select All
 Command-Shift-T ... Open Terminal
 Command-Shift-F ... Open File Manager
-Command-Shift-L ... Go To Line Nbr
 Command-Slash ... Toggle Line Comment
+Alt-z ... snippets
 Shift-Command-Z ... snippets (for Mac)
 '''
         Messagebox.show_info(msg, "Key Commands")
@@ -1597,157 +1543,6 @@ Shift-Command-Z ... snippets (for Mac)
         self.linenums.redraw()
         toast(" Cleared All bookmarks. ", 1900)
         return "break"
-
-
-    def find_functions(self, event=None):
-        ''' Returns
-        list[tuple[str, int]]
-            [(function_name, line_number), ...] in the order they appear.
-        Serves them in a listbox for user selection '''
-        text_widget = self.text_area
-        language = self.extension_get_language()
-
-        code = text_widget.get("1.0", END)
-        sanitized = self._strip_strings_and_comments(code, language.lower())
-
-        patterns = {
-            # def name(...):
-            "python":
-                r"^[ \t]*def\s+([A-Za-z_]\w*)\s*\(",
-
-            # returnType name(args) {   -- skips control keywords
-            "c":
-                r"^[ \t]*(?!(?:if|for|while|switch|return|sizeof|else)\b)"
-                r"(?:[A-Za-z_][\w\s\*]*?\s+)"
-                r"([A-Za-z_]\w*)\s*\([^;]*?\)\s*\{",
-
-            # function name(...)  |  var/let/const name = function|arrow
-            # |  name: function(...)
-            "javascript":
-                r"function\s+([A-Za-z_$][\w$]*)\s*\("
-                r"|(?:var|let|const)\s+([A-Za-z_$][\w$]*)\s*=\s*"
-                r"(?:function\s*\(|\([^)]*\)\s*=>|[A-Za-z_$][\w$]*\s*=>)"
-                r"|([A-Za-z_$][\w$]*)\s*:\s*function\s*\(",
-
-            # func name(...)   |   func (recv) name(...)
-            "go":
-                r"^[ \t]*func\s+(?:\([^)]*\)\s+)?([A-Za-z_]\w*)\s*\(",
-
-            # modifiers returnType name(args) {
-            "java":
-                r"(?:public|private|protected|static|final|synchronized|"
-                r"abstract|native|\s)+[\w<>\[\],\s]+\s+"
-                r"([A-Za-z_]\w*)\s*\([^)]*\)\s*(?:throws[\w\s,]+)?\{",
-
-            # def name   |   def self.name
-            "ruby":
-                r"^[ \t]*def\s+(?:self\.)?([A-Za-z_]\w*[!?=]?)",
-        }
-
-        lang = language.lower()
-        if lang not in patterns:
-            raise ValueError(f"Unsupported language: {language}")
-
-        results = []
-        regex = re.compile(patterns[lang], re.MULTILINE)
-
-        for m in regex.finditer(sanitized):
-            # Pick the first non-None capture group (some patterns have several).
-            name = next((g for g in m.groups() if g), None)
-            if not name:
-                continue
-            # Line number = number of newlines before the match + 1.
-            line_no = sanitized.count("\n", 0, m.start()) + 1
-            results.append((name, line_no))
-        #
-        # bring up a selection window
-        # Create Toplevel popup ( see open_file_recent )
-        #
-        popup = Toplevel(self)
-        popup.title("List of Functions")
-        popup.geometry("300x400")
-        popup.resizable(True, False)
-        popup.attributes("-topmost", True)
-
-        # Ensure focus goes to the popup
-        popup.grab_set()
-
-        # Label instruction
-        lbl = Label(popup, text="Select a function:", font=("Sans", 11, "bold"))
-        # lbl = Label(popup, text="Select a function:")
-        lbl.pack(anchor=W, padx=15, pady=(15, 5))
-
-        # Listbox Wrapper Frame (for scrollbar attachment)
-        list_frame = Frame(popup)
-        list_frame.pack(fill=BOTH, expand=YES, padx=15, pady=5)
-
-        scrollbar = Scrollbar(list_frame, orient=VERTICAL)
-        scrollbar.pack(side=RIGHT, fill=Y)
-
-        # Listbox with ttkbootstrap styling attributes
-        listbox = Listbox(
-            list_frame,
-            yscrollcommand=scrollbar.set,
-            font=("Sans", 11),
-            borderwidth=0
-        )
-        listbox.pack(side=LEFT, fill=BOTH, expand=YES)
-        scrollbar.config(command=listbox.yview)
-
-        # Populate Listbox
-        for function in results:
-            listbox.insert(END, function[0])
-
-        # Helper function to capture selection and load file
-        def do_selected(e=None):
-            sel = listbox.curselection()
-            i = sel[0]
-            ln = results[i][1]
-            if ln:
-                self.go_to_line(ln)
-                if e:
-                    popup.destroy() # exit on double clicks
-
-        # Handle Double Click selection, will exit popup also
-        listbox.bind("<Double-1>", do_selected)
-
-        # Action Buttons Layout
-        btn_frame = Frame(popup)
-        btn_frame.pack(fill=X, side=BOTTOM, padx=15, pady=15)
-        cancel_btn = Button(btn_frame, text="Cancel", command=popup.destroy)
-        cancel_btn.pack(side=RIGHT, padx=5)
-        open_btn = Button(btn_frame, text="Find Function", command=do_selected) # don't exit
-        open_btn.pack(side=RIGHT, padx=5)
-
-
-
-    def _strip_strings_and_comments(self, code, language):
-        '''
-        Blank out strings and comments so the regexes don't get fooled,
-        while preserving newlines so line numbers stay correct.
-        '''
-        def blank(match):
-            # Keep newlines, replace everything else with spaces.
-            return re.sub(r"[^\n]", " ", match.group(0))
-
-        if language == "python":
-            code = re.sub(r'""".*?"""|\'\'\'.*?\'\'\'', blank, code, flags=re.DOTALL)
-            code = re.sub(r'#.*', blank, code)
-            code = re.sub(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'', blank, code)
-
-        elif language == "ruby":
-            code = re.sub(r'#.*', blank, code)
-            code = re.sub(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'', blank, code)
-
-        else:  # C-family: c, javascript, go, java
-            code = re.sub(r'/\*.*?\*/', blank, code, flags=re.DOTALL)
-            code = re.sub(r'//.*', blank, code)
-            code = re.sub(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'', blank, code)
-            if language == "javascript":
-                code = re.sub(r'`(?:\\.|[^`\\])*`', blank, code, flags=re.DOTALL)
-
-        return code
-
 
 # Startup Splash: needed to initialize theme for dialogs
 

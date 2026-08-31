@@ -25,7 +25,7 @@ from ttkbootstrap.dialogs import Messagebox
 from ttkbootstrap.widgets import ToolTip
 from ttkbootstrap import Style
 import tkinterdnd2 as tkdnd
-from tkinterdnd2 import DND_FILES, TkinterDnD
+from tkinterdnd2 import TkinterDnD
 from tklinenums import TkLineNumbers
 import markdown
 from Tksyntex import SyntaxHighlighter
@@ -46,7 +46,7 @@ if platform.system() == "Windows":
     inipath  = Path("C:\\", "TKedit", "tkedit.ini")
     lastpath = Path("C:\\", "TKedit", "lastfile")
     winpath  = Path("C:\\", "TKedit", "winfo")
-    appicon  = Path("C:\\", "TKedit", "tkedit256.png")
+    appicon  = Path("C:\\", "TKedit", "tked1.png")
     recents  = Path("C:\\", "TKedit", "recent_files.json")
     snipdir  = Path("C:\\", "TKedit", "snippets")
 elif platform.system() == "Darwin":
@@ -54,7 +54,7 @@ elif platform.system() == "Darwin":
     inipath = Path("/Users",user,".config","tkedit","tkedit.ini")
     lastpath = Path("/Users",user,".config","tkedit","lastfile")
     winpath = Path("/Users",user,".config","tkedit","winfo")
-    appicon = Path("/Users",user,".config","tkedit","tkedit256.png")
+    appicon = Path("/Users",user,".config","tkedit","tked1.png")
     recents = Path("/Users",user,".config","tkedit","recent_files.json")
     snipdir = Path("/Users",user,".config","tkedit","snippets")
 else:
@@ -63,9 +63,19 @@ else:
     inipath = Path("/home",user,".config","tkedit","tkedit.ini")
     lastpath = Path("/home",user,".config","tkedit","lastfile")
     winpath = Path("/home",user,".config","tkedit","winfo")
-    appicon = Path("/home",user,".config","tkedit","tkedit256.png")
+    appicon = Path("/home",user,".config","tkedit","tked1.png")
     recents = Path("/home",user,".config","tkedit","recent_files.json")
     snipdir = Path("/home",user,".config","tkedit","snippets")
+
+
+drag_data = {
+    "active": False,
+    "moved": False,
+    "text": "",
+    "start_x": 0,
+    "start_y": 0,
+}
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 class TKedit:
@@ -185,6 +195,7 @@ class TKedit:
         self.file_menu.add_command(label="Find", accelerator="Ctrl+F", command=self.find_text)
         self.file_menu.add_command(label="Next", accelerator="F3", command=self.find_next)
         self.file_menu.add_command(label="Replace", accelerator="Ctrl+H", command=self.find_replace)
+        self.file_menu.add_command(label="Go To Line", accelerator="Ctrl+Shift+L", command=self.goto_line)
         self.file_menu.add_command(label="Toggle Word Wrap", accelerator="Ctrl+W", command=self.toggle_wordwrap)
 
         self.file_menu.add_separator()
@@ -235,6 +246,11 @@ class TKedit:
             self.text_area.bind("<Control-p>", self.load_previous)
             self.text_area.bind("<Alt-z>", self.open_snippet_window)
             self.text_area.bind("<Shift-Control-Z>", self.open_snippet_window)  # for Mac
+            self.text_area.bind("<Shift-Control-L>", self.goto_line)  # for Mac
+            # drag & drop text
+            self.text_area.bind("<Button-1>", self.on_button_press)
+            self.text_area.bind("<B1-Motion>", self.on_drag)
+            self.text_area.bind("<ButtonRelease-1>", self.on_button_release)
         else:
         # Bind keyboard shortcuts for MacOS
             self.text_area.bind('<Command-KeyPress-1>', self.about)
@@ -269,7 +285,11 @@ class TKedit:
             self.text_area.bind("<Command-p>", self.load_previous)
             self.text_area.bind("<Alt-z>", self.open_snippet_window)
             self.text_area.bind("<Shift-Command-Z>", self.open_snippet_window)  # for Mac
-
+            self.text_area.bind("<Shift-Command-L>", self.goto_line)
+            # drag & drop text
+            self.text_area.bind("<Button-1>", self.on_button_press)
+            self.text_area.bind("<B1-Motion>", self.on_drag)
+            self.text_area.bind("<ButtonRelease-1>", self.on_button_release)
 
         if self.autoindent.lower() == 'yes':
             self.text_area.bind("<Return>", self.on_return)
@@ -736,6 +756,7 @@ class TKedit:
 
 
     def prompt_save_changes(self) -> bool:
+        ''' Unsaved edits warning '''
         res = Messagebox.yesno(
             f"Do you want to save changes to {self.filename} first?",
             "Save File First?"
@@ -1012,9 +1033,8 @@ class TKedit:
         if ext in lx:
             index = lx.index(ext)
             return lex[index]
-        else:
-            self.has_highlight = False
-            return None
+        self.has_highlight = False
+        return None
 
 
     def return_selection(self):
@@ -1029,10 +1049,40 @@ class TKedit:
             return ""
 
 
+    def goto_line(self, event=None):
+        ''' Move the insertion point to the beginning of line_number
+        and scroll the Text widget so that the line is visible. '''
+        line_number = Querybox.get_string(
+            prompt="Enter Line Nbr:",
+            title="Go To Line"
+        )
+
+        try:
+            line_number = int(line_number)
+        except (ValueError, TypeError):
+            return "break"
+        # Get the total number of lines
+        last_line = int(self.text_area.index("end-1c").split(".")[0])
+        # Check that the requested line exists
+        if line_number < 1 or line_number > last_line:
+            return "break"
+
+        # Move insertion point to beginning of the requested line
+        self.text_area.mark_set("insert", f"{line_number}.0")
+        # Make sure the line is visible
+        self.text_area.see("insert")
+        # Give the Text widget the keyboard focus
+        self.text_area.focus_set()
+        return "break"
+
+
     def find_text(self, event=None):
         ''' Ask the user for the text to search
             then find and highlight the text if found.'''
-        look = self.return_selection()
+        look = self.return_selection()  # if text is selected
+        if look == "":
+            look = self.search_term  # use the previous search_term
+
         # term = simpledialog.askstring("Find", "Enter text to search:", initialvalue=look)
         term = Querybox.get_string(
             prompt="Search for:",
@@ -1041,6 +1091,7 @@ class TKedit:
         )
 
         if term:
+            self.term = term
             self.search_term = term
             # Remove any previous highlights.
             self.text_area.tag_remove("highlight", "1.0", END)
@@ -1083,6 +1134,75 @@ class TKedit:
             Messagebox.show_info("No more matches found.", "Result")
             self.text_area.tag_remove("highlight", "1.0", END)
         return "break"  # Prevent the default behavior.
+
+
+    # functions for drag & drop selected text
+
+    def on_button_press(self, event):
+        ''' begin text drap & drop '''
+        selection = self.text_area.tag_ranges("sel")
+
+        # No selection
+        if not selection:
+            drag_data["active"] = False
+            return
+
+        start, end = selection
+        clicked_index = self.text_area.index(f"@{event.x},{event.y}")
+
+        # Start dragging only if the mouse press is inside the selection
+        if self.text_area.compare(clicked_index, ">=", start) and \
+           self.text_area.compare(clicked_index, "<", end):
+
+            drag_data.update({
+                "active": True,
+                "moved": False,
+                "text": self.text_area.get(start, end),
+                "start_x": event.x,
+                "start_y": event.y,
+            })
+
+            # Prevent the normal Text widget behavior
+            return "break"
+
+        drag_data["active"] = False
+
+
+    def on_drag(self, event):
+        ''' verifying actual drag '''
+        if not drag_data["active"]:
+            return
+
+        # Avoid treating a simple click as a drag
+        if (
+            abs(event.x - drag_data["start_x"]) > 3 or
+            abs(event.y - drag_data["start_y"]) > 3
+        ):
+            drag_data["moved"] = True
+
+        return "break"
+
+
+    def on_button_release(self, event):
+        ''' finishing the drop & drag '''
+        if not drag_data["active"]:
+            return
+
+        if drag_data["moved"]:
+            drop_index = self.text_area.index(f"@{event.x},{event.y}")
+
+            # Copy the selected text to the new location.
+            # There is intentionally no delete() call.
+            self.text_area.insert(drop_index, drag_data["text"])
+
+        drag_data["active"] = False
+        drag_data["moved"] = False
+        drag_data["text"] = ""
+
+        self.highlighter.highlight()
+        return "break"
+
+    # End drag & drop functions
 
 
     def display_help(self, event=None):
@@ -1265,7 +1385,7 @@ class TKedit:
 
 
     def has_selection(self, text_widget) -> bool:
-        # "sel" is the selection tag in Tk Text widgets
+        ''' "sel" is the selection tag in Tk Text widgets '''
         ranges = text_widget.tag_ranges("sel")
         return bool(ranges) and (text_widget.compare(ranges[0], "!=", ranges[1]))
 
@@ -1274,7 +1394,6 @@ class TKedit:
         ''' Routes txt context menu actions '''
         if n == 1:  # Copy
             if self.has_selection(self.text_area):
-                content = self.text_area.selection_get()
                 root.clipboard_clear()  # clear clipboard contents
                 root.clipboard_append(self.text_area.selection_get())  # append new value to clipbaord
             else:
@@ -1404,6 +1523,7 @@ Control-w ... Toggle Word wrap
 Control-a ... Select All
 Control-Shift-T ... Open Terminal
 Control-Shift-F ... Open File Manager
+Control-Shift-L ... Go To Line
 Control-Slash ... Toggle Line Comment
 Alt-z ... snippets
 Shift-Control-Z ... snippets (for Mac)
@@ -1429,6 +1549,7 @@ Command-w ... Toggle Word wrap
 Command-a ... Select All
 Command-Shift-T ... Open Terminal
 Command-Shift-F ... Open File Manager
+Command-Shift-L ... Go To Line
 Command-Slash ... Toggle Line Comment
 Alt-z ... snippets
 Shift-Command-Z ... snippets (for Mac)
@@ -1475,6 +1596,7 @@ Shift-Command-Z ... snippets (for Mac)
     # snippets
 
     def open_snippet_window(self, event=None):
+        ''' instantiate Snippet dialog '''
         SnippetWindow(self, self.text_area, self.highlighter, snipdir)
 
 
@@ -1672,7 +1794,7 @@ class RecentFilesManager:
 
 
 class SnippetWindow(Toplevel):
-    '''  '''
+    ''' A Toplevel window the managing code snippets '''
     def __init__(self, master, editor_text, highlighter, snippet_dir="snippets"):
         super().__init__(master)
         self.title("Snippets")
